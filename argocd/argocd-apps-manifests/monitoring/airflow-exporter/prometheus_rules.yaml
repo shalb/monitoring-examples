@@ -1,0 +1,99 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: airflow-exporter
+  name: airflow-exporter-rules
+spec:
+  groups:
+    - name: "airflow_exporter down alerts"
+      rules:
+        - alert: "airflow_exporter down"
+          expr: up{instance=~".*:9132"} == 0
+          for: 10m
+          annotations:
+            message: "airflow_exporter down"
+            description: 'Check if service: "airflow_exporter" is running'
+            grafana: "https://grafana.example.local.lan/d/ahdu389329/airflow-airflow_exporter?orgId=1&var-server_env={{ $labels.server_env }}&var-pod_name={{ $labels.pod_name }}&fullscreen&panelId=71"
+            access: "https://confluence.example.local.lan/display/example/Access#Access-Grafana,Prometheus,Alertmanager"
+          labels:
+            severity: warning
+            team: "backup"
+
+
+    - name: "parse errors - airflow_exporter"
+      rules:
+        - alert: "airflow_exporter has new errors"
+          expr: airflow_exporter_up != 1
+          for: 10m
+          annotations:
+            message: "airflow_exporter has new errors"
+            description: 'Check log for airflow_exporter'
+            grafana: "https://grafana.example.local.lan/d/ahdu389329/airflow-airflow_exporter?orgId=1&var-server_env={{ $labels.server_env }}&var-pod_name={{ $labels.pod_name }}&fullscreen&panelId=86"
+            access: "https://confluence.example.local.lan/display/example/Access#Access-Grafana,Prometheus,Alertmanager"
+          labels:
+            severity: warning
+            team: "backup"
+
+
+    - name: "health alerts - airflow_exporter"
+      rules:
+        - alert: "airflow health check fails"
+          expr: airflow_exporter_health_status != 1
+          for: 30m
+          annotations:
+            message: "airflow health check fails"
+            description: 'Check health for airflow service: "{{ $labels.airflow_service }}"'
+            grafana: "https://grafana.example.local.lan/d/ahdu389329/airflow-airflow_exporter?orgId=1&var-server_env={{ $labels.server_env }}&var-pod_name={{ $labels.pod_name }}&fullscreen&panelId=91"
+            access: "https://confluence.example.local.lan/display/example/Access#Access-Grafana,Prometheus,Alertmanager"
+          labels:
+            severity: warning
+            team: "backup"
+
+        - alert: "airflow scheduler heartbeat to old"
+          expr: time() - airflow_exporter_scheduler_seconds > 1800
+          annotations:
+            message: "airflow scheduler heartbeat to old"
+            description: 'Airflow scheduler not sending heartbeats in time'
+            grafana: "https://grafana.example.local.lan/d/ahdu389329/airflow-airflow_exporter?orgId=1&var-server_env={{ $labels.server_env }}&var-pod_name={{ $labels.pod_name }}&fullscreen&panelId=92"
+            access: "https://confluence.example.local.lan/display/example/Access#Access-Grafana,Prometheus,Alertmanager"
+          labels:
+            severity: warning
+            team: "backup"
+
+
+    - name: "dags alerts - airflow_exporter"
+      rules:
+        - alert: "airflow last dag run failed"
+          expr: airflow_exporter_dags_last_status == -1
+          for: 30m
+          annotations:
+            message: "airflow last dag run failed"
+            description: 'Check logs for DAG: "{{ $labels.dag_id }}"'
+            grafana: "https://grafana.example.local.lan/d/ahdu389329/airflow-airflow_exporter?orgId=1&var-server_env={{ $labels.server_env }}&var-pod_name={{ $labels.pod_name }}&var-dag={{ $labels.dag_id }}&fullscreen&panelId=94"
+            access: "https://confluence.example.local.lan/display/example/Access#Access-Grafana,Prometheus,Alertmanager"
+          labels:
+            severity: warning
+            team: "backup"
+
+        - alert: "airflow last dag run upstream failed"
+          expr: airflow_exporter_dags_last_status == -7
+          for: 30m
+          annotations:
+            message: "airflow last dag run upstream failed"
+            description: 'Check logs for DAG: "{{ $labels.dag_id }}"'
+            grafana: "https://grafana.example.local.lan/d/ahdu389329/airflow-airflow_exporter?orgId=1&var-server_env={{ $labels.server_env }}&var-pod_name={{ $labels.pod_name }}&var-dag={{ $labels.dag_id }}&fullscreen&panelId=94"
+            access: "https://confluence.example.local.lan/display/example/Access#Access-Grafana,Prometheus,Alertmanager"
+          labels:
+            severity: warning
+
+        - alert: "airflow last dag run has no status"
+          expr: airflow_exporter_dags_last_status == 0
+          for: 30m
+          annotations:
+            message: "airflow last dag run has no status"
+            description: 'Check logs for DAG: "{{ $labels.dag_id }}"'
+            grafana: "https://grafana.example.local.lan/d/ahdu389329/airflow-airflow_exporter?orgId=1&var-server_env={{ $labels.server_env }}&var-pod_name={{ $labels.pod_name }}&var-dag={{ $labels.dag_id }}&fullscreen&panelId=94"
+            access: "https://confluence.example.local.lan/display/example/Access#Access-Grafana,Prometheus,Alertmanager"
+          labels:
+            severity: warning

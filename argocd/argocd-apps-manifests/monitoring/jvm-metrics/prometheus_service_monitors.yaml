@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  labels:
+    app: jvm-actuator
+  name: jvm-actuator-monitor
+spec:
+  podMetricsEndpoints:
+  - path: /actuator/prometheus
+    interval: 10s
+    scrapeTimeout: 10s
+    relabelings:
+      - sourceLabels: [none]
+        replacement: jvm-actuator
+        targetLabel: job
+      - sourceLabels: [__meta_kubernetes_pod_name]
+        targetLabel: pod_name
+      - sourceLabels: [ __address__ ]
+        regex: '.*:8080'
+        action: keep
+  selector:
+    matchLabels:
+      monitoring: jvm-prometheus
+  namespaceSelector:
+    any: true

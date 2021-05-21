@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-exporter
+  labels:
+    role: airflow-exporter
+spec:
+  selector:
+    matchLabels:
+      app: airflow-exporter
+  template:
+    metadata:
+      labels:
+        role: monitoring
+        app: airflow-exporter
+      annotations:
+        monitoring: "true"
+    spec:
+      containers:
+        - name: airflow-exporter
+          image: shalb/airflow-exporter:0.0.3
+          ports:
+            - containerPort: 9132
+          env:
+            - name: TARGET_URL
+              value: "http://airflow.example.svc:8080"
+          resources:
+            requests:
+              memory: "0.1Gi"
+              cpu: "0.1"
+            limits:
+              memory: "0.1Gi"

@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  labels:
+    app: airflow-exporter
+  name: airflow-exporter-monitor
+spec:
+  podMetricsEndpoints:
+  - interval: 1m
+    scrapeTimeout: 10s
+    relabelings:
+      - sourceLabels: [none]
+        replacement: "airflow metrics"
+        targetLabel: job
+      - sourceLabels: [__meta_kubernetes_pod_name]
+        targetLabel: pod_name
+    metricRelabelings:
+      - sourceLabels: [ __name__ ]
+        regex: 'airflow_exporter.*'
+        action: keep
+  selector:
+    matchLabels:
+      app: airflow-exporter
+  namespaceSelector:
+    any: true

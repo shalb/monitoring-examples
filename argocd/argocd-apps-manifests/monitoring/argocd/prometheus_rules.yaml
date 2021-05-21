@@ -1,0 +1,42 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: argocd
+  name: argocd-rules
+spec:
+  groups:
+    - name: "argocd apps alerts"
+      rules:
+        - alert: "argocd metrics absent"
+          expr: absent(argocd_app_info) == 1
+          for: 5m
+          annotations:
+            message: "argocd metrics absent"
+            description: 'Check selector in monitor: "kubectl get PodMonitor argocd-monitor -n monitoring ; kubectl get pod -l app.kubernetes.io/name=argocd-application-controller -A"'
+            grafana: "https://grafana.example.local.lan/d/LCAgc9rWz/argocd?orgId=1"
+            access: "https://confluence.example.local.lan/display/example/Access#Access-Grafana,Prometheus,Alertmanager"
+          labels:
+            severity: info
+
+        - alert: "argocd application not healthy"
+          expr: argocd_app_info{health_status!="Healthy"} == 1
+          for: 1h
+          annotations:
+            message: "argocd application not healthy"
+            description: 'Application: "{{ $labels.name }}" has health status: "{{ $labels.health_status }}"'
+            grafana: "https://grafana.example.local.lan/d/LCAgc9rWz/argocd?viewPanel=117&orgId=1&var-health_status={{ $labels.health_status }}&var-application={{ $labels.name }}"
+            access: "https://confluence.example.local.lan/display/example/Access#Access-Grafana,Prometheus,Alertmanager"
+          labels:
+            severity: info
+
+        - alert: "argocd application not in sync"
+          expr: argocd_app_info{sync_status!="Synced"} == 1
+          for: 1h
+          annotations:
+            message: "argocd application not in sync"
+            description: 'Application: "{{ $labels.name }}" has sync status: "{{ $labels.sync_status }}"'
+            grafana: "https://grafana.example.local.lan/d/LCAgc9rWz/argocd?viewPanel=118&orgId=1&var-health_status={{ $labels.health_status }}&var-application={{ $labels.name }}"
+            access: "https://confluence.example.local.lan/display/example/Access#Access-Grafana,Prometheus,Alertmanager"
+          labels:
+            severity: info

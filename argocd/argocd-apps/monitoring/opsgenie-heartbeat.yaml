@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  destination:
+    namespace: monitoring
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    repoURL: https://raw.githubusercontent.com/shalb/opsgenie-heartbeat/master/charts/
+    chart: opsgenie-heartbeat
+    targetRevision: 0.0.1
+    helm:
+      values: |
+        prometheus_test_url: 'http://monitoring-kube-prometheus-prometheus:9090/metrics'
+        alertmanager_test_url: 'http://monitoring-kube-prometheus-alertmanager:9093/metrics'
+        opsgenie_api_key: exampleAPIKey
+        project: exampleProject
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

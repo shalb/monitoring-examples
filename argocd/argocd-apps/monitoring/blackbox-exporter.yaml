@@ -1,0 +1,57 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: blackbox-exporter
+  namespace: argocd
+spec:
+  destination:
+    namespace: monitoring
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: prometheus-blackbox-exporter
+    targetRevision: 4.10.2
+    helm:
+      values: |
+        serviceMonitor:
+          enabled: true
+          defaults:
+            interval: 1m
+            scrapeTimeout: 10s
+            module: http_2xx
+          scheme: http
+          targets:
+             - name: example-1.local.lan
+               url: https://example-1.local.lan
+             - name: example-2.local.lan
+               url: https://example-2.local.lan
+        config:
+          modules:
+            http_2xx:
+              prober: http
+              timeout: 5s
+              http:
+                preferred_ip_protocol: "ip4"
+            tcp_connect:
+              prober: tcp
+              timeout: 5s
+        prometheusRule:
+          enabled: true
+          namespace: monitoring
+          rules:
+            - alert: "Http check fails"
+              expr: probe_success{job="blackbox-exporter-prometheus-blackbox-exporter"} != 1
+              annotations:
+                message: 'Http check fails for host: "{{`{{ $labels.instance }}`}}"'
+                description: 'Check if host: "{{`{{ $labels.instance }}`}}" is healthy'
+                grafana: 'https://grafana.example.local.lan/d/eXqpy5DWk/http-checks-blackbox_exporter?viewPanel=2&orgId=1&var-host={{`{{ $labels.instance }}`}}'
+                access: "https://confluence.example.local.lan/display/example/Access#Access-Grafana,Prometheus,Alertmanager"
+              labels:
+                severity: critical
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

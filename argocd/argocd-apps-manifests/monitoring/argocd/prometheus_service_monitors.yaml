@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  labels:
+    app: argocd
+  name: argocd-monitor
+spec:
+  podMetricsEndpoints:
+  - interval: 1m
+    scrapeTimeout: 10s
+    relabelings:
+      - sourceLabels: [none]
+        replacement: "argocd app metrics"
+        targetLabel: job
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-application-controller
+  namespaceSelector:
+    any: true

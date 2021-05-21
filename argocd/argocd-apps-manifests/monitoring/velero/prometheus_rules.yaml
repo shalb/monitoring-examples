@@ -1,0 +1,30 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: velero
+  name: velero-rules
+spec:
+  groups:
+    - name: "velero backup alerts"
+      rules:
+        - alert: "velero metrics absent"
+          expr: absent(velero_backup_last_successful_timestamp) == 1
+          for: 5m
+          annotations:
+            message: "velero metrics absent"
+            description: 'Check selector in monitor: "kubectl get ServiceMonitor velero -n velero ; kubectl get endpoints -l "app.kubernetes.io/instance=velero" -A"'
+            grafana: "https://grafana.prod.vermietet.de/d/blOOb5yGk/backups-velero?orgId=1"
+            access: "https://confluence.shalb.com/display/ZENH/Access#Access-Grafana,Prometheus,Alertmanager"
+          labels:
+            severity: info
+
+        - alert: "velero - last successful backup to old"
+          expr: time() - velero_backup_last_successful_timestamp > 3600 * 26
+          annotations:
+            summary: 'velero - last successful backup to old'
+            description: 'Check backups status: "velero get backups"'
+            grafana: "https://grafana.prod.vermietet.de/d/blOOb5yGk/backups-velero?orgId=1&var-backup_job={{ $labels.schedule }}"
+            access: "https://confluence.shalb.com/display/SHALBT/Monitoring"
+          labels:
+            severity: info
