@@ -1,0 +1,9 @@
+apiVersion: integreatly.org/v1alpha1
+kind: GrafanaDashboard
+metadata:
+  name: prometheus-metrics
+  labels:
+    app: syndesis
+spec:
+  name: prometheus-metrics.json
+  json: >{{ .Files.Get "prometheus-metrics.json" | nindent 4 }}

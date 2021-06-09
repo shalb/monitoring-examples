@@ -1,0 +1,4 @@
+apiVersion: v1
+name: grafana-dashboards
+version: 0.0.1
+description: Grafana dashboards code
