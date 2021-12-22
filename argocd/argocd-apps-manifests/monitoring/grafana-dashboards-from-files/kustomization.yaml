@@ -1,0 +1,25 @@
+configMapGenerator:
+- name: grafana-dashboards-argocd
+  namespace: monitoring
+  files:
+    - argocd.json
+- name: grafana-dashboards-kubernetes-metrics
+  namespace: monitoring
+  files:
+    - kubernetes-metrics.json
+- name: grafana-dashboards-nginx-ingress-controller
+  namespace: monitoring
+  files:
+    - nginx-ingress-controller.json
+- name: grafana-dashboards-request-handling-performance
+  namespace: monitoring
+  files:
+    - request-handling-performance.json
+- name: grafana-dashboards-redis-exporter
+  namespace: monitoring
+  files:
+    - redis-exporter.json
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    grafana_dashboard: "1"
