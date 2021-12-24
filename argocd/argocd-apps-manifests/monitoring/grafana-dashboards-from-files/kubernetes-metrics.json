@@ -5803,7 +5803,7 @@
           "30d"
         ]
       },
-      "timezone": "",
+      "timezone": "browser",
       "title": "Kubernetes metrics",
       "uid": "1xIGyoZZz",
       "version": 1

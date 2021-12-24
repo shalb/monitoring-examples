@@ -14,6 +14,9 @@ configMapGenerator:
 - name: grafana-dashboards-redis-exporter
   files:
     - redis-exporter.json
+- name: grafana-dashboards-cloudwatch-rds
+  files:
+    - cloudwatch-rds.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:
