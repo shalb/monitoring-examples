@@ -17,6 +17,9 @@ configMapGenerator:
 - name: grafana-dashboards-cloudwatch-rds
   files:
     - cloudwatch-rds.json
+- name: grafana-dashboards-prometheus-alerts
+  files:
+    - prometheus-alerts.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:
