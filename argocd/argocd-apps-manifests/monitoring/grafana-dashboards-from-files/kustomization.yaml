@@ -23,6 +23,9 @@ configMapGenerator:
 - name: grafana-dashboards-loki-search
   files:
     - loki-search.json
+- name: grafana-dashboards-loki-stack
+  files:
+    - loki-stack.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:
