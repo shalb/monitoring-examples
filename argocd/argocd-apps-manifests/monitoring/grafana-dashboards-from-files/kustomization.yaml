@@ -20,6 +20,9 @@ configMapGenerator:
 - name: grafana-dashboards-prometheus-alerts
   files:
     - prometheus-alerts.json
+- name: grafana-dashboards-loki-search
+  files:
+    - loki-search.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:
