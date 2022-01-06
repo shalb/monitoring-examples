@@ -1,0 +1,24 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  annotations:
+    meta.helm.sh/release-name: rancher-monitoring
+    meta.helm.sh/release-namespace: cattle-monitoring-system
+    prometheus-operator-validated: "true"
+  labels:
+    app: rancher-monitoring
+    release: rancher-monitoring
+  name: rancher-monitoring-prometheus-mytest
+  namespace: cattle-monitoring-system
+spec:
+  groups:
+  - name: mytest
+    rules:
+    - alert: mytest_alert
+      expr: count(up) > 1
+     #expr: count(up) == -1
+      annotations:
+        description: mytest_description
+        summary: mytest_summary
+      labels:
+        severity: info

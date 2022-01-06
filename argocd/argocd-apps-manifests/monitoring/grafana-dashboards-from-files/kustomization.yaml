@@ -26,6 +26,9 @@ configMapGenerator:
 - name: grafana-dashboards-loki-stack
   files:
     - loki-stack.json
+- name: grafana-dashboards-victoriametrics-single
+  files:
+    - victoriametrics-single.json
 generatorOptions:
   disableNameSuffixHash: true
   labels:

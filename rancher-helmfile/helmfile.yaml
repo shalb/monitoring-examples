@@ -1,0 +1,51 @@
+repositories:
+  - name: rancher-charts
+    url: https://raw.githubusercontent.com/rancher/charts/release-v2.5/
+
+  - name: vm
+    url: https://victoriametrics.github.io/helm-charts/
+
+ #- name: prometheus-community
+ #  url: https://prometheus-community.github.io/helm-charts
+
+environments:
+  default:
+    values:
+      - env-values.yaml.gotmpl
+
+releases:
+  - name: rancher-monitoring
+    namespace: cattle-monitoring-system
+    chart: rancher-charts/rancher-monitoring
+    version: 14.5.100
+    values:
+      - rancher-monitoring-values.yaml
+    needs:
+      - cattle-monitoring-system/rancher-monitoring-crd
+      - cattle-monitoring-system/http-auth
+
+  - name: rancher-monitoring-crd
+    namespace: cattle-monitoring-system
+    chart: rancher-charts/rancher-monitoring-crd
+    version: 14.5.100
+
+  - name: http-auth
+    namespace: cattle-monitoring-system
+    chart: http-auth
+    version: 0.0.1
+    values:
+      - http-auth/my_values.yaml.gotmpl
+
+  - name: alertmanager-config
+    namespace: cattle-monitoring-system
+    chart: alertmanager-config
+    version: 0.0.1
+
+  - name: vm-internal
+    namespace: cattle-monitoring-system
+    chart: vm/victoria-metrics-single
+    version: 0.8.9
+    values:
+      - victoria-metrics-single-internal-values.yaml
+    needs:
+      - cattle-monitoring-system/rancher-monitoring

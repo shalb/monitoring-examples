@@ -1,0 +1,4 @@
+apiVersion: v1
+name: http-auth
+version: 0.0.1
+description: http auth for prometheuus and alertmanager ingresses
