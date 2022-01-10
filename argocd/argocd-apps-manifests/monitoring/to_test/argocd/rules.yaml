@@ -1,0 +1,77 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: argocd
+  name: argocd-rules
+spec:
+  groups:
+    - name: "argocd alerts"
+      rules:
+        - alert: ArgocdMetricsScrapeFailed
+          expr: up{job="argocd-application-controller-metrics"} != 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Pod: {{ $labels.pod }}'
+            description: 'Fix Argocd metrics scape for pod: {{ $labels.pod }}'
+
+        - alert: ArgocdNoMetrics
+          expr: absent(argocd_app_info{job="argocd-application-controller-metrics"}) == 1
+          labels:
+            severity: critical
+          annotations:
+            summary: 'No metrics from Argocd instances'
+            description: 'Fix Argocd metrics scape. Job: {{ $labels.job }}'
+
+        - alert: ArgocdApplicationNotHealthy
+          expr: argocd_app_info{health_status!="Healthy"} == 1
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Not healthy app: {{ $labels.name }}'
+            description: 'Application: {{ $labels.name }} has health status: {{ $labels.health_status }} - should be fixed'
+
+        - alert: ArgocdApplicationNotSynced
+          expr: argocd_app_info{sync_status!="Synced"} == 1
+          for: 1h
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Not synced app: {{ $labels.name }}'
+            description: 'Application: {{ $labels.name }} not in sync and has status: {{ $labels.sync_status }} - should be fixed'
+
+
+        - alert: ArgocdRepoServerMetricsScrapeFailed
+          expr: up{job="argocd-repo-server-metrics"} != 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Pod: {{ $labels.pod }}'
+            description: 'Fix Argocd metrics scape for pod: {{ $labels.pod }}'
+
+        - alert: ArgocdRepoServerNoMetrics
+          expr: absent(argocd_repo_pending_request_total{job="argocd-repo-server-metrics"}) == 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No metrics from Argocd instances'
+            description: 'Fix Argocd metrics scape. Job: {{ $labels.job }}'
+
+
+        - alert: ArgocdServerMetricsScrapeFailed
+          expr: up{job="argocd-server-metrics"} != 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Pod: {{ $labels.pod }}'
+            description: 'Fix Argocd metrics scape for pod: {{ $labels.pod }}'
+
+        - alert: ArgocdServerNoMetrics
+          expr: absent(argocd_redis_request_total{job="argocd-server-metrics"}) == 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No metrics from Argocd instances'
+            description: 'Fix Argocd metrics scape. Job: {{ $labels.job }}'

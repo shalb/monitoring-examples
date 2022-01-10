@@ -1,0 +1,65 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: ingress-nginx-controller
+  name: ingress-nginx-controller-rules
+spec:
+  groups:
+    - name: "ingress-nginx controller alerts"
+      rules:
+        - alert: NginxIngressMetricsScrapeFailed
+          expr: up{job="ingress-nginx-controller-metrics"} != 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Pod: {{ $labels.pod }}'
+            description: 'Fix nginx-ingress metrics scape for pod: {{ $labels.pod }}'
+
+        - alert: NginxIngressIncompleteMetrics
+          expr: count(up{job="ingress-nginx-controller-metrics"} == 1) / count(nginx_ingress_controller_config_last_reload_successful) < 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Some nginx-ingress instances UP and have no metrics'
+            description: 'Fix nginx-ingress metrics scape. Job: {{ $labels.job }}'
+
+        - alert: NginxIngressNoMetrics
+          expr: absent(nginx_ingress_controller_config_last_reload_successful{job="ingress-nginx-controller-metrics"}) == 1
+          labels:
+            severity: critical
+          annotations:
+            summary: 'No metrics from nginx-ingress instances'
+            description: 'Fix nginx-ingress metrics scape. Job: {{ $labels.job }}'
+
+        - alert: NginxConfigReloadFailed
+          expr: count(nginx_ingress_controller_config_last_reload_successful == 0) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Nginx-ingress config reload failed'
+            description: 'Uninstall the latest ingress changes to allow config reloads to resume'
+
+        - alert: NginxCertificateExpiry
+          expr: (nginx_ingress_controller_ssl_expire_time_seconds - time()) < (3600 * 24 * 7)
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Ssl certificate will expire in less then a week'
+            description: 'Renew expiring certificates to avoid downtime'
+
+        - alert: NginxTooMany500s
+          expr: 100 * ( sum( nginx_ingress_controller_requests{status=~"5.+"} ) / sum(nginx_ingress_controller_requests) ) > 5
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Too many 5XXs'
+            description: 'More than 5% of all requests returned 5XX'
+
+        - alert: NginxTooMany400s
+          expr: 100 * ( sum( nginx_ingress_controller_requests{status=~"4.+"} ) / sum(nginx_ingress_controller_requests) ) > 5
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Too many 4XXs'
+            description: 'More than 5% of all requests returned 4XX'
