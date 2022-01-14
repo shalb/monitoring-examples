@@ -26,7 +26,6 @@ spec:
 
         - alert: RedisMetricsScrapeFailed
           expr: redis_up != 1
-          for: 1h
           labels:
             severity: critical
           annotations:

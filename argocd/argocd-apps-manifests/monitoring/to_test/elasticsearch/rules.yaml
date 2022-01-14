@@ -1,0 +1,57 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: elasticsearch
+  name: elasticsearch-rules
+spec:
+  groups:
+    - name: "elasticsearch alerts"
+      rules:
+        - alert: ElasticsearchExporterScrapeFailed
+          expr: up{job="elasticsearch-metrics"} != 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Pod: {{ $labels.pod }}'
+            description: 'Fix Elasticsearch metrics scape for pod: {{ $labels.pod }}'
+
+        - alert: ElasticsearchNoMetrics
+          expr: absent(elasticsearch_cluster_health_up{job="elasticsearch-metrics"}) == 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No metrics from Elasticsearch instances'
+            description: 'Fix Elasticsearch metrics scape. Job: {{ $labels.job }}'
+
+        - alert: ElasticsearchHealthMetricsScrapeFailed
+          expr: elasticsearch_cluster_health_up != 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No health metrics from Elasticsearch'
+            description: 'Elasticsearch-exporter unable to scrape health metrics from Elasticsearch endpoint. Check logs of exporter and Elasticsearch.'
+
+        - alert: ElasticsearchIndexMetricsScrapeFailed
+          expr: elasticsearch_index_stats_up != 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No index metrics from Elasticsearch'
+            description: 'Elasticsearch-exporter unable to scrape index metrics from Elasticsearch endpoint. Check logs of exporter and Elasticsearch.'
+
+        - alert: ElasticsearchInfoMetricsScrapeFailed
+          expr: elasticsearch_clusterinfo_up != 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No info metrics from Elasticsearch'
+            description: 'Elasticsearch-exporter unable to scrape info metrics from Elasticsearch endpoint. Check logs of exporter and Elasticsearch.'
+
+        - alert: ElasticsearchNodeMetricsScrapeFailed
+          expr: elasticsearch_node_stats_up != 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No node metrics from Elasticsearch'
+            description: 'Elasticsearch-exporter unable to scrape node metrics from Elasticsearch endpoint. Check logs of exporter and Elasticsearch.'
