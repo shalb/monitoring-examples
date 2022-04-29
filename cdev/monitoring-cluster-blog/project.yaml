@@ -1,0 +1,14 @@
+name: cdev-demo
+kind: Project
+backend: aws-backend
+variables:
+  organization: test
+  region: eu-central-1
+  state_bucket_name: test-cdev-state
+  cluster_name: test
+  domain: cluster.dev
+  env: "test"
+  worker_node_instance_type: "t2.large"
+  public_key_name: cdev
+  public_key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC7x0SOhD4ByHcSi+wL3XB6AJUEllQq635rrTXZTFlvcwqC74EkSOdtxwDTWcZps2dDhZ4YiPyPdwI70lO27nvccNh/bGSD0iVVUOCcvuUQp8heh1O7ZIhI1+brHEgBbwK1B16ifQ+hZgFnF7CrFrJ4Xf5cdh3E3aIreIrN3m/j4BWDLavrHIaYGogbO9UHgEmeyIuxhCtn893/TeqGQuMd/+0Xm6tfcrhfVkfisJlP+gZoos6MkrJ4KAs3fdNoNWbXTteKvikaWaQ+Eq1uqPdymL+wvDSxwJWQFvVGzX6y/lYvs0FXYBEh78hMONYAN0oNYkpfhK3ra2MOsK5dSM8QKGnBH+uwZRhBeej3GipvdxeTjWVF7A34FaO1Z6xhz3bDIaRVTITwLL/GZiaDcMm9POiJAdDmHodluzX0HD6G2SxJYfreGyadlh82U/Gh9VRXR1Uesp/un3o7FrgGf7FEytdW1Vu0iFGHlVqklYfOcU9YFPGZZQvoYzy1cfo/Za8="
+  argocd_server_admin_password: "$2a$10$1buVsK9yv0Al1oJlLmABeeRxYsArdlT2QPdNRqaZwiuYztj9JUDmu"
