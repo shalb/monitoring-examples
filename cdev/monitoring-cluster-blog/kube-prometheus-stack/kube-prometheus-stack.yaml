@@ -160,7 +160,7 @@ spec:
           #      hosts:
           #        - alertmanager.example.local.lan
 
-          alertmanagerSpec:
+          #alertmanagerSpec:
             #externalUrl: https://alertmanager.example.local.lan
             # Enable persistant storage if needed
             #storage:
