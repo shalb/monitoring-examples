@@ -11,7 +11,7 @@ Install [Docker](https://docs.docker.com/engine/install/ubuntu/).
 
 ## AWS account
 Login or [register new AWS account](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/).  
-We should pick region to deploy. All things should be deployed to this region.  
+We should [select](https://docs.aws.amazon.com/awsconsolehelpdocs/latest/gsg/select-region.html) [region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions) to deploy our cluster in that region.  
 Add [programmatic access key](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html#access-keys-and-secret-access-keys) for [new](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html) or existing user.  
 Get example environment file:
 ```bash
