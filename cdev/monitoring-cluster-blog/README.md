@@ -2,7 +2,6 @@
 In this article we will learn how to run [Kubernetes](https://kubernetes.io/) cluster in [AWS](https://aws.amazon.com/) by [Clusterdev](https://cluster.dev/).  
 We will deploy monitoring code to learn how to monitor Kubernetes clusters by [Prometheus](https://prometheus.io/).
 
-
 # Requirements
 ## OS
 We should have [Ubuntu 20.04](https://releases.ubuntu.com/20.04/) host to use this manual without any customization.
@@ -11,9 +10,9 @@ We should have [Ubuntu 20.04](https://releases.ubuntu.com/20.04/) host to use th
 Install [Docker](https://docs.docker.com/engine/install/ubuntu/).
 
 ## AWS account
-Login or register new [AWS account](https://aws.amazon.com/).  
+Login or [register new AWS account](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/).  
 We should pick region to deploy. All things should be deployed to this region.  
-Add [programmatic access key](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html#access-keys-and-secret-access-keysv) for [new](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html) or existing user.  
+Add [programmatic access key](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html#access-keys-and-secret-access-keys) for [new](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html) or existing user.  
 Get example environment file:
 ```bash
 curl https://raw.githubusercontent.com/shalb/monitoring-examples/main/cdev/monitoring-cluster-blog/env > env
