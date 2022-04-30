@@ -71,7 +71,7 @@ cdev apply -l debug | tee apply.log
 
 ## Get kubeconfig
 ```bash
-aws s3 cp s3://gelo-cdev-state/test/kubeconfig ./kubeconfig
+cdev_bash -c "cp -a /workspace/cluster-dev/.cluster.dev/cache/my-k3s-cluster.k3s/kubeconfig_tmp kubeconfig"
 ```
 
 # Deploy basic monitoring stack
