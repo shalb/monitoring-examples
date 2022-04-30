@@ -76,9 +76,9 @@ spec:
           #    - grafana.example.local.lan
           #    secretName: grafana-tls-secret
 
-          grafana.ini:
-            server:
-              root_url: https://grafana.example.local.lan
+          #grafana.ini:
+            #server:
+              #root_url: https://grafana.example.local.lan
 
           # Enable persistant storage if needed
           #persistence:
@@ -126,7 +126,7 @@ spec:
               cluster_name: exampleClusterName
               server_env: exampleEnvName
               project: exampleProjectName
-            externalUrl: https://prometheus.example.local.lan
+            #externalUrl: https://prometheus.example.local.lan
             #retention: 30d
 
             # Enable persistant storage if needed
@@ -161,7 +161,7 @@ spec:
           #        - alertmanager.example.local.lan
 
           alertmanagerSpec:
-            externalUrl: https://alertmanager.example.local.lan
+            #externalUrl: https://alertmanager.example.local.lan
             # Enable persistant storage if needed
             #storage:
             #  volumeClaimTemplate:
