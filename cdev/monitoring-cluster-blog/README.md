@@ -3,7 +3,7 @@
    * [OS](#os)
    * [Docker](#docker)
    * [AWS account](#aws-account)
-* [Create basic project](#create-basic-project)
+* [Create and deploy our project](#create-basic-project)
    * [Get example code](#get-example-code)
    * [Create S3 bucket to store our project's state](#create-s3-bucket-to-store-our-projects-state)
    * [Customize project's settings](#customize-projects-settings)
@@ -42,7 +42,7 @@ Add programmatic access key to environment file `env`:
 editor env
 ```
 
-# Create basic project
+# Create and deploy our project
 ## Get example code
 ```bash
 mkdir -p cdev && mv env cdev/ && cd cdev && chmod 777 ./
