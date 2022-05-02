@@ -112,7 +112,20 @@ Now we should deploy our project to AWS via `cdev` command:
 ```bash
 cdev apply -l debug | tee apply.log
 ```
-Successfull deploy should provide further instructions how to access Kubernetes, ArgoCD and Grafana.  
+Successfull deploy should provide further instructions how to access Kubernetes and URLs of ArgoCD, Grafana web UIs.  
+In some cases we should wait some time to access those web UIs.  
+DNS update delays may be source of problem.  
+In such case we able to forward all needed services via `kubectl` to client host:  
+```bash
+kubectl port-forward svc/argocd-server -n argocd 18080:443  > /dev/null 2>&1 &
+kubectl port-forward svc/monitoring-grafana -n monitoring 28080:80  > /dev/null 2>&1 &
+```
+We may test our forwards via `curl`:  
+```bash
+curl 127.0.0.1:18080
+curl 127.0.0.1:28080
+```
+If we see no errors from `curl`, than client host should access those same endpoins via any browser.
 
 # Destroy our project
 If we want to destroy our cluster - we should run command:
