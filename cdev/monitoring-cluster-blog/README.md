@@ -1,23 +1,43 @@
+* [Goal](#goal)
+* [Requirements](#requirements)
+   * [OS](#os)
+   * [Docker](#docker)
+   * [AWS account](#aws-account)
+* [Create basic project](#create-basic-project)
+   * [Get example code](#get-example-code)
+   * [Create S3 bucket to store our project's state](#create-s3-bucket-to-store-our-projects-state)
+   * [Customize project's settings](#customize-projects-settings)
+      * [Select AWS Region](#select-aws-region)
+      * [Set unique cluster name](#set-unique-cluster-name)
+      * [Set our SSH key](#set-our-ssh-key)
+      * [Set ArgoCD password](#set-argocd-password)
+      * [Set Grafana password](#set-grafana-password)
+   * [Run bash in Clusterdev container](#run-bash-in-clusterdev-container)
+   * [Deploy our project](#deploy-our-project)
+* [Destroy our project](#destroy-our-project)
+* [Conclusion](#conclusion)
 # Goal
-In this article we will learn how to run [Kubernetes](https://kubernetes.io/) cluster in [AWS](https://aws.amazon.com/) by [Clusterdev](https://cluster.dev/).  
-We will deploy monitoring code to learn how to monitor Kubernetes clusters by [Prometheus](https://prometheus.io/).
+In this article we will learn how to deploy project which contains test monitoring environment.  
+This project will be deployed by [Clusterdev](https://cluster.dev/) to [AWS](https://aws.amazon.com/),  
+managed by [Kubernetes](https://kubernetes.io/) cluster([k3s](https://rancher.com/docs/k3s/latest/en/)) and monitored by [Community monitoring stack](https://github.com/prometheus-community/helm-charts/tree/kube-prometheus-stack-35.0.3/charts/kube-prometheus-stack).
 
 # Requirements
 ## OS
-We should have [Ubuntu 20.04](https://releases.ubuntu.com/20.04/) host to use this manual without any customization.
+We should have some client host with [Ubuntu 20.04](https://releases.ubuntu.com/20.04/) to use this manual without any customization.  
 
 ## Docker
-Install [Docker](https://docs.docker.com/engine/install/ubuntu/).
+We should install [Docker](https://docs.docker.com/engine/install/ubuntu/) to client host.
 
 ## AWS account
-Login or [register new AWS account](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/).  
-We should [select](https://docs.aws.amazon.com/awsconsolehelpdocs/latest/gsg/select-region.html) [region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions) to deploy our cluster in that region.  
+Login or [register](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/) new AWS account.  
+We should [select](https://docs.aws.amazon.com/awsconsolehelpdocs/latest/gsg/select-region.html) AWS [region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions) to deploy our cluster in that region.  
 Add [programmatic access key](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html#access-keys-and-secret-access-keys) for [new](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html) or existing user.  
-Get example environment file:
+Open `bash` terminal on client host.  
+Get example environment file `env` to set our AWS credentials:
 ```bash
 curl https://raw.githubusercontent.com/shalb/monitoring-examples/main/cdev/monitoring-cluster-blog/env > env
 ```
-Add programmatic access key to environment file:
+Add programmatic access key to environment file `env`:
 ```bash
 editor env
 ```
@@ -27,9 +47,6 @@ editor env
 ```bash
 mkdir -p cdev && mv env cdev/ && cd cdev && chmod 777 ./
 alias cdev='docker run -it -v $(pwd):/workspace/cluster-dev --env-file=env clusterdev/cluster.dev:v0.6.3'
-alias aws='docker run -it -v $(pwd):/workspace/cluster-dev --env-file=env --entrypoint=aws clusterdev/cluster.dev:v0.6.3'
-alias kubectl='docker run -it -v $(pwd):/workspace/cluster-dev --env-file=env --network=host --entrypoint=kubectl clusterdev/cluster.dev:v0.6.3'
-alias cdev_bash='docker run -it -v $(pwd):/workspace/cluster-dev --env-file=env --entrypoint="" clusterdev/cluster.dev:v0.6.3 bash'
 cdev project create https://github.com/shalb/cdev-aws-k3s-test
 curl https://raw.githubusercontent.com/shalb/monitoring-examples/main/cdev/monitoring-cluster-blog/stack.yaml > stack.yaml
 curl https://raw.githubusercontent.com/shalb/monitoring-examples/main/cdev/monitoring-cluster-blog/project.yaml > project.yaml
@@ -37,57 +54,73 @@ curl https://raw.githubusercontent.com/shalb/monitoring-examples/main/cdev/monit
 
 ## Create S3 bucket to store our project's state
 Go to [S3](https://s3.console.aws.amazon.com/s3/buckets) and [create](https://docs.aws.amazon.com/AmazonS3/latest/userguide/create-bucket-overview.html) new bucket.  
-Replace value of `state_bucket_name` key in config file `project.yaml` by our bucket name:
+Replace value of `state_bucket_name` key in config file `project.yaml` by state bucket's name:  
 ```bash
 editor project.yaml
 ```
 
-## Customize mandatory settings
-We will set all needed settings in config file `project.yaml`  
+## Customize project's settings
+We will set all needed settings of our project in config file `project.yaml`  
+We should customize all variables, which have `# example` comment in the end of line.
 
-We should set region via `region` key in config file `project.yaml`  
+### Select AWS Region
+We should replace value of [region](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html#concepts-available-regions) key in config file `project.yaml` by our region.  
 
+### Set unique cluster name
 By default we will use `cluster.dev` domain as root domain for cluster [ingresses](https://kubernetes.github.io/ingress-nginx/).  
-We should set unique value for `cluster_name` in `project.yaml`, because default ingress will use it in resulting DNS name.  
-This command may help us to generate random name: `echo "$(tr -dc a-z0-9 </dev/urandom | head -c 5)"`  
+We should replace value of `cluster_name` key by unique string in config file `project.yaml`, because default ingress will use it in resulting DNS name.  
+This command may help us to generate random name and check is it in use:  
+```bash
+CLUSTER_NAME=$(echo "$(tr -dc a-z0-9 </dev/urandom | head -c 5)") 
+dig argocd.${CLUSTER_NAME}.cluster.dev | grep -q "^${CLUSTER_NAME}" || echo "OK to use cluster_name: ${CLUSTER_NAME}"
+```
+We should see message: `OK to use cluster_name: ...`
 
+### Set our SSH key
 We should have access to cluster nodes via [SSH](https://en.wikipedia.org/wiki/Secure_Shell).  
-To add existing SSH key we should add it to `public_key` key in `project.yaml`.  
+To add existing SSH key we should replace value of `public_key` key in config file `project.yaml`.  
 If we have no SSH key, then we should [create it](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/create-key-pairs.html).  
 
-In our default cluster we will have [ArgoCD](https://argo-cd.readthedocs.io/). It will help us to deploy our applications.  
-To secure ArgoCD we should set unique password as value of `argocd_server_admin_password` key in `project.yaml`.  
-Default value is bcrypted `password` string. We should change it to our custom password.  
-To encrypt our custom password we may use [online tool](https://www.browserling.com/tools/bcrypt) or run command:
+### Set ArgoCD password
+In our project we have [ArgoCD](https://argo-cd.readthedocs.io/). It will help us to deploy our applications.  
+To secure ArgoCD we should replace value of `argocd_server_admin_password` key  
+by unique password in config file `project.yaml`. Default value is bcrypted `password` string.  
+To encrypt our custom password we may use [online tool](https://www.browserling.com/tools/bcrypt) or encrypt it by command:
 ```bash
 docker run -it --entrypoint="" clusterdev/cluster.dev:v0.6.3 apt install -y apache2-utils && htpasswd -bnBC 10 "" myPassword | tr -d ':\n' ; echo ''
 ```
 
-## Deploy our cluster
+### Set Grafana password
+We should add custom password for [Grafana](https://grafana.com/docs/grafana/latest/).  
+To secure Grafana we should replace value of `grafana_password` key  
+by unique password in config file `project.yaml`.  
+This command may help us to generate random password:  
+```bash
+echo "$(tr -dc a-zA-Z0-9,._! </dev/urandom | head -c 20)"
+```
+
+## Run bash in Clusterdev container
+To avoid installation of all needed tools directly to client host - we will run all commands inside Clusterdev container.  
+We should run next commands to execute `bash` inside cdev conainer and proceed to deploy:  
+```bash
+alias cdev_bash='docker run -it -v $(pwd):/workspace/cluster-dev --env-file=env --network=host --entrypoint="" clusterdev/cluster.dev:v0.6.3 bash'
+cdev_bash
+```
+
+## Deploy our project
+Now we should deploy our project to AWS via `cdev` command:
 ```bash
 cdev apply -l debug | tee apply.log
 ```
+Successfull deploy should provide further instructions how to access Kubernetes, ArgoCD and Grafana.  
 
-## Get kubeconfig
-```bash
-cdev_bash -c "cp -a /workspace/cluster-dev/.cluster.dev/cache/my-k3s-cluster.k3s/kubeconfig_tmp kubeconfig"
-```
-
-# Deploy basic monitoring stack
-```bash
-curl https://raw.githubusercontent.com/shalb/monitoring-examples/cdev/cdev/monitoring-cluster-blog/kube-prometheus-stack/kube-prometheus-stack-crds.yaml > kube-prometheus-stack-crds.yaml
-curl https://raw.githubusercontent.com/shalb/monitoring-examples/cdev/cdev/monitoring-cluster-blog/kube-prometheus-stack/kube-prometheus-stack.yaml > kube-prometheus-stack.yaml
-kubectl -f kube-prometheus-stack-crds.yaml apply
-kubectl -f kube-prometheus-stack.yaml apply
-```
-
-# Destroy cluster
+# Destroy our project
+If we want to destroy our cluster - we should run command:
 ```bash
 cdev destroy -l debug | tee destroy.log
 ```
 
-# Usefull commands
-```bash
-kubectl port-forward svc/argocd-server -n argocd 28080:443
-kubectl port-forward svc/monitoring-grafana -n monitoring 28080:80
-```
+# Conclusion
+Now we able to deploy and destroy basic project with monitoring stack by simple commands to save our time.  
+This project allows us to use current project as test environment for monitoring related articles  
+and test many usefull monitoring cases before applying it to production environments.
