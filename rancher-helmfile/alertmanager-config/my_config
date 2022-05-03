@@ -8,9 +8,9 @@ route:
   receiver: blackhole
   routes:
   # Alerting disabled - enable only for prod
-  #- receiver: blackhole
-  #  group_by: [...]
-  #  repeat_interval: 120h
+  - receiver: blackhole
+    group_by: [...]
+    repeat_interval: 120h
 
   #- receiver: customer_slack
   #  group_by: [...]
