@@ -1,0 +1,50 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: cloudwatch
+  name: cloudwatch-rules
+spec:
+  groups:
+    - name: "cloudwatch alerts"
+      rules:
+        - alert: CloudwatchExporterScrapeFailed
+          expr: up{job="prometheus-cloudwatch-exporter"} != 1
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Pod: {{ $labels.pod }}'
+            description: 'Fix Cloudwatch metrics scape for pod: {{ $labels.pod }}'
+
+        - alert: CloudwatchNoMetrics
+          expr: absent(aws_rds_cpuutilization_average{job="prometheus-cloudwatch-exporter"}) == 1
+          labels:
+            severity: critical
+          annotations:
+            summary: 'No metrics from Cloudwatch instances'
+            description: 'Fix Cloudwatch metrics scape. Job: {{ $labels.job }}'
+
+        - alert: CloudwatchRDSCPULoadTooHigh
+          expr: aws_rds_cpuutilization_average > 70
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'CPU load > 70%'
+            description: 'CPU load > 70% for db instance: {{ $labels.dbinstance_identifier }}'
+
+        - alert: CloudwatchRDSTooManyConnections
+          expr: aws_rds_database_connections_average > 200
+          labels:
+            severity: warning
+          annotations:
+            summary: 'RDS connections: {{ $value }}'
+            description: 'Too many connections for RDS instance: {{ $labels.dbinstance_identifier }}'
+
+        - alert: CloudwatchRDSFreeStorageWarning
+          expr: (aws_rds_free_storage_space_average / (1024 * 1024 * 1024)) < 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Free Storage < 1 Gb'
+            description: 'Free Storage < 1 Gb for RDS instance: {{ $labels.dbinstance_identifier }}'

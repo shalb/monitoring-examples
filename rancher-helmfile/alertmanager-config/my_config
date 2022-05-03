@@ -1,0 +1,88 @@
+global:
+  resolve_timeout: 5m
+route:
+  group_by: [...]
+  group_wait: 9s
+  group_interval: 9s
+  repeat_interval: 120h
+  receiver: blackhole
+  routes:
+  # Alerting disabled - enable only for prod
+  - receiver: blackhole
+    group_by: [...]
+    repeat_interval: 120h
+
+  #- receiver: customer_slack
+  #  group_by: [...]
+  #  continue: true
+  #  repeat_interval: 120h
+
+  # Non needed alerts disabled
+  #- receiver: blackhole
+  #  group_by: [...]
+  #  match_re:
+  #    alertname: "CPUThrottlingHigh"
+  #  repeat_interval: 120h
+
+  - receiver: opsgenie_info
+    group_by: [...]
+    match_re:
+      severity: "info"
+    continue: true
+    repeat_interval: 120h
+
+  - receiver: opsgenie_warning
+    group_by: [...]
+    match_re:
+      severity: "warning"
+    continue: true
+    repeat_interval: 120h
+
+  - receiver: opsgenie_critical
+    group_by: [...]
+    match_re:
+      severity: "critical"
+    continue: true
+    repeat_interval: 120h
+
+receivers:
+- name: blackhole
+
+- name: opsgenie_critical
+  opsgenie_configs:
+    - api_key: 00000000-0000-0000-0000-000000000000
+      responders:
+        - name: test
+          type: team
+      message: "{{ .GroupLabels.cluster_name }} | {{ .GroupLabels.alertname }} {{ .CommonAnnotations.message }}"
+      priority: "P1"
+
+- name: opsgenie_warning
+  opsgenie_configs:
+    - api_key: 00000000-0000-0000-0000-000000000000
+      responders:
+        - name: test
+          type: team
+      message: "{{ .GroupLabels.cluster_name }} | {{ .GroupLabels.alertname }} {{ .CommonAnnotations.message }}"
+      priority: "P3"
+
+- name: opsgenie_info
+  opsgenie_configs:
+    - api_key: 00000000-0000-0000-0000-000000000000
+      responders:
+        - name: test
+          type: team
+      message: "{{ .GroupLabels.cluster_name }} | {{ .GroupLabels.alertname }} {{ .CommonAnnotations.message }}"
+      priority: "P5"
+
+#- name: customer_slack
+#  slack_configs:
+#    - api_url: https://hooks.slack.com/services/000000000/00000000000/000000000000000000000000
+#      username: prometheus
+#      title: "cluster_name: '{{ .GroupLabels.cluster_name }}' | alert: '{{ .GroupLabels.alertname }} {{ .CommonAnnotations.message }}'"
+#      text: "{{ .CommonAnnotations.description }}"
+#      title_link: "https://grafana.example.local.lan/{{ .CommonAnnotations.grafana_title_link }}"
+#      send_resolved: true
+
+templates:
+- /etc/alertmanager/config/*.tmpl

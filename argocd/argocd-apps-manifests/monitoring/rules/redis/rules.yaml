@@ -1,0 +1,33 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: redis
+  name: redis-rules
+spec:
+  groups:
+    - name: "redis alerts"
+      rules:
+        - alert: RedisExporterScrapeFailed
+          expr: up{job="redis-metrics"} != 1
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Pod: {{ $labels.pod }}'
+            description: 'Fix Redis metrics scape for pod: {{ $labels.pod }}'
+
+        - alert: RedisNoMetrics
+          expr: absent(redis_up{job="redis-metrics"}) == 1
+          labels:
+            severity: critical
+          annotations:
+            summary: 'No metrics from Redis instances'
+            description: 'Fix Redis metrics scape. Job: {{ $labels.job }}'
+
+        - alert: RedisMetricsScrapeFailed
+          expr: redis_up != 1
+          labels:
+            severity: critical
+          annotations:
+            summary: 'No metrics from Redis'
+            description: 'Redis-exporter unable to scrape metrics from Redis endpoint. Check logs of exporter and Redis.'

@@ -1,0 +1,89 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: mysql
+  name: mysql-rules
+spec:
+  groups:
+    - name: "mysql alerts"
+      rules:
+        - alert: MysqlExporterScrapeFailed
+          expr: up{job="mysql-metrics"} != 1
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Pod: {{ $labels.pod }}'
+            description: 'Fix Mysql metrics scape for pod: {{ $labels.pod }}'
+
+        - alert: MysqlNoMetrics
+          expr: absent(mysql_up{job="mysql-metrics"}) == 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No metrics from Mysql instances'
+            description: 'Fix Mysql metrics scape. Job: {{ $labels.job }}'
+
+        - alert: MysqlMetricsScrapeFailed
+          expr: mysql_up != 1
+          labels:
+            severity: critical
+          annotations:
+            summary: 'No metrics from Mysql'
+            description: 'Mysql-exporter unable to scrape metrics from Mysql endpoint. Check logs of exporter and Mysql.'
+
+        - alert: MysqlReplicationDelayWarning
+          expr: mysql_slave_status_seconds_behind_master > 1200
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Mysql replication delay too high'
+            description: 'Mysql has replication delay more than 20 minutes from master: "{{ $labels.master_host }}"'
+
+        - alert: MysqlReplicationDelayCritical
+          expr: mysql_slave_status_seconds_behind_master > 3600
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Mysql replication delay is critical'
+            description: 'Mysql has replication delay more than 1 hour from master: "{{ $labels.master_host }}"'
+
+        - alert: MysqlReplicationError
+          expr: mysql_slave_status_last_errno != 0
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Mysql has replication error'
+            description: 'Mysql has replication error, check error message via "SHOW SLAVE STATUS" and fix  replication'
+
+        - alert: MysqlReplicationSlaveIoThreadStatus
+          expr: mysql_slave_status_slave_io_running != 1
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Mysql slave IO thread is not running'
+            description: 'mysql replication slave IO thread is not running on master: "{{ $labels.master_host }}"'
+
+        - alert: MysqlReplicationSlaveSqlThreadStatus
+          expr: mysql_slave_status_slave_sql_running != 1
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Mysql slave SQL thread is not running'
+            description: 'mysql replication slave SQL thread is not running on master: "{{ $labels.master_host }}"'
+
+        - alert: MysqlTooManyConnectionsWarning
+          expr: (mysql_global_status_threads_connected / mysql_global_variables_max_connections) * 100 > 70
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Mysql has too many connections'
+            description: 'Mysql has too many connections, check why so many connections used, change global variable "max_connections" if needed by command: SET GLOBAL max_connections = 999;, you can get number of current connections by command: SHOW STATUS WHERE `Variable_name` = "Threads_connected"; Check processlist via "SHOW PROCESSLIST"'
+
+        - alert: MysqlTooManyConnectionsCritical
+          expr: (mysql_global_status_threads_connected / mysql_global_variables_max_connections) * 100 > 90
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Mysql has critical number  of connections'
+            description: 'Mysql has too many connections, check why so many connections used, change global variable "max_connections" if needed by command: SET GLOBAL max_connections = 999;, you can get number of current connections by command: SHOW STATUS WHERE `Variable_name` = "Threads_connected"; Check processlist via "SHOW PROCESSLIST"'

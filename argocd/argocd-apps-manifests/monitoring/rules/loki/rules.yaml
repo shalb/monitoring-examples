@@ -1,0 +1,53 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: loki
+  name: loki-rules
+spec:
+  groups:
+    - name: "loki alerts"
+      rules:
+        - alert: LokiScrapeFailed
+          expr: up{job="loki-stack-headless"} != 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Pod: {{ $labels.pod }}'
+            description: 'Fix Loki metrics scape for pod: {{ $labels.pod }}'
+
+        - alert: LokiNoMetrics
+          expr: absent(loki_ingester_wal_disk_full_failures_total{job="loki-stack-headless"}) == 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No metrics from Loki instances'
+            description: 'Fix Loki metrics scape. Job: {{ $labels.job }}'
+
+        - alert: LokiDiskFull
+          expr: rate(loki_ingester_wal_disk_full_failures_total[5m]) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Loki disk full'
+            description: 'Loki disk should be increased'
+
+        - alert: LokiTooMany5xxResponses
+          expr: |
+            (100 * (sum(rate(loki_request_duration_seconds_count{status_code=~"5.."}[5m])) by (namespace, job, route)
+            /
+            sum(rate(loki_request_duration_seconds_count[5m])) by (namespace, job, route) > 0))
+            > 10
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Loki has too many 5xx responses'
+            description: 'Route: {{ $labels.route }} has {{ printf "%.2f" $value }}% errors'
+
+        - alert: LokiRequestPanics
+          expr: rate(loki_panic_total[5m]) > 0
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Loki requests has panics'
+            description: 'Loki has {{ printf "%.2f" $value }}% panics per second'

@@ -1,0 +1,105 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: victoriametrics
+  name: victoriametrics-rules
+spec:
+  groups:
+    - name: "victoriametrics alerts"
+      rules:
+        - alert: VictoriametricsExporterScrapeFailed
+          expr: up{job="victoria-metrics-single-server"} != 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Pod: {{ $labels.pod }}'
+            description: 'Fix Victoriametrics metrics scape for pod: {{ $labels.pod }}'
+
+        - alert: VictoriametricsNoMetrics
+          expr: absent(vm_log_messages_total{job="victoria-metrics-single-server"}) == 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No metrics from Victoriametrics instances'
+            description: 'Fix Victoriametrics metrics scape. Job: {{ $labels.job }}'
+
+        - alert: VictoriametricsPrometheusRemoteStorageWritesFailed
+          expr: rate(prometheus_remote_storage_exemplars_failed_total{url="http://victoria-metrics-single-server.databases.svc:8428/api/v1/write"}[5m]) > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: '{{ printf "%.2f" $value }} writes failed per second'
+            description: 'Check why Prometeus has failed writes for URL: {{ $labels.url }}'
+
+        - alert: VictoriametricsPrometheusRemoteStorageWritesNoMetrics
+          expr: absent(prometheus_remote_storage_exemplars_failed_total{job="prometheus-operator-kube-p-prometheus",url="http://victoria-metrics-single-server.databases.svc:8428/api/v1/write"}) == 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No metrics from Prometheus instances'
+            description: 'Fix Prometheus metrics scape. Job: {{ $labels.job }}'
+
+        - alert: VictoriametricsErrorsInLogs
+          expr: rate(vm_log_messages_total{level!~"info|warn"}[5m]) > 0
+          for: 20m
+          labels:
+            severity: warning
+          annotations:
+            summary: '{{ printf "%.2f" $value }} error logs per second'
+            description: 'Check errors in logs for job: {{ $labels.job }}, pod: {{ $labels.pod }}'
+
+        - alert: VictoriametricsRequestErrorsToAPI
+          expr: sum(rate(vm_http_request_errors_total[5m])) by (job, pod) > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: '{{ printf "%.2f" $value }} http errors per second'
+            description: 'Probably clients sending incorrect requests. Job: {{ $labels.job }}, pod: {{ $labels.pod }}'
+
+        - alert: VictoriametricsRowsRejectedOnIngestion
+          expr: sum(rate(vm_rows_ignored_total[5m])) by (pod, reason) > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: '{{ printf "%.2f" $value }} rows rejected per second'
+            description: 'Victoriametrics rejecting to ingest rows. Job: {{ $labels.job }}, pod: {{ $labels.pod }}, reason: {{ $labels.reason }}'
+
+        - alert: VictoriametricsConcurrentFlushesHitTheLimit
+          expr: avg_over_time(vm_concurrent_addrows_current[1m]) >= vm_concurrent_addrows_capacity
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Hitting concurrent flushes limit'
+            description: 'Limit of concurrent flushes is equal to number of CPUs. When VictoriaMetrics constantly hits the limit it means that storage is overloaded and requires more CPU. Job: {{ $labels.job }}, pod: {{ $labels.pod }}, reason: {{ $labels.reason }}'
+
+        - alert: VictoriametricsTooHighChurnRate
+          expr: (sum(rate(vm_new_timeseries_created_total[5m])) by (pod, job) / sum(rate(vm_rows_inserted_total[5m])) by (pod, job)) > 0.1
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Churn rate is more than 10%'
+            description: 'Victoriametrics constantly creates new time series. Database performance may degrade, which means high RAM usage and|or slow queries. Job: {{ $labels.job }}, pod: {{ $labels.pod }}'
+
+        - alert: VictoriametricsTooHighSlowInsertsRate
+          expr: (sum(rate(vm_slow_row_inserts_total[5m])) by(pod, job) / sum(rate(vm_rows_inserted_total[5m])) by (pod, job)) > 0.5
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Too many slow inserts'
+            description: 'Probably not enough resources. Try to increase RAM. Job: {{ $labels.job }}, pod: {{ $labels.pod }}'
+
+        - alert: VictoriametricsLabelsLimitExceededOnIngestion
+          expr: rate(vm_metrics_with_dropped_labels_total[5m]) > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: '{{ printf "%.2f" $value }} labels limit hits per second'
+            description: 'Victoriametrics limits the number of labels per each metric with `-maxLabelsPerTimeseries` command-line flag. This prevents from ingesting metrics with too many labels. Please verify that `-maxLabelsPerTimeseries` is configured correctly or that clients which send these metrics aren`t misbehaving. Job: {{ $labels.job }}, pod: {{ $labels.pod }}'

@@ -1,0 +1,56 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: promtail
+  name: promtail-rules
+spec:
+  groups:
+    - name: "promtail alerts"
+      rules:
+        - alert: PromtailScrapeFailed
+          expr: up{job="loki-stack-promtail-headless"} != 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Pod: {{ $labels.pod }}'
+            description: 'Fix Promtail metrics scape for pod: {{ $labels.pod }}'
+
+        - alert: PromtailNoMetrics
+          expr: absent(promtail_dropped_entries_total{job="loki-stack-promtail-headless"}) == 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No metrics from Promtail instances'
+            description: 'Fix Promtail metrics scape. Job: {{ $labels.job }}'
+
+        - alert: PromtailTooMany5xxResponses
+          expr: |
+            (100 * (sum(rate(promtail_request_duration_seconds_count{status_code=~"5..|failed"}[1m])) by (namespace, job, route, instance)
+            /
+            sum(rate(promtail_request_duration_seconds_count[1m])) by (namespace, job, route, instance) > 0))
+            > 10
+          for: 20m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Promtail has too many 5xx responses'
+            description: 'Route: {{ $labels.route }} has {{ printf "%.2f" $value }}% errors'
+
+        - alert: PromtailFileLagging
+          expr: promtail_stream_lag_seconds > 60
+          for: 20m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Promtail has lag'
+            description: 'Promtail has lag for file: {{ $labels.filename }}, pod: {{ $labels.pod }}'
+
+        - alert: PromtailTooManyDroppedEntries
+          expr: rate(promtail_dropped_entries_total[5m]) > 0
+          for: 20m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Promtail drop entries'
+            description: 'Promtail drop entries, pod: {{ $labels.pod }}'

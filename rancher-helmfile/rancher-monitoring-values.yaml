@@ -1,0 +1,158 @@
+prometheus-adapter:
+  enabled: false
+
+
+nodeExporter:
+  serviceMonitor:
+    relabelings:
+      - sourceLabels: [__meta_kubernetes_endpoint_node_name]
+        targetLabel: node
+
+
+prometheus:
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    externalLabels:
+      cluster_name: {{ .Values.cluster_name }}
+      server_env: {{ .Values.env }}
+      project: {{ .Values.project }}
+    externalUrl: "https://{{ .Values.prometheus_ingress_host }}"
+    retention: 4d
+    remoteWrite:
+      - url: http://vm-victoria-metrics-single-server-internal:8428/api/v1/write
+    resources:
+      limits:
+        memory: 3000Mi
+        cpu: 1
+      requests:
+        memory: 3000Mi
+        cpu: 1
+   #additionalScrapeConfigs:
+   #  - job_name: test job
+   #    static_configs:
+   #      - targets: ['10.0.2.203:9093']
+  ingress:
+    enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/auth-type: basic
+      nginx.ingress.kubernetes.io/auth-secret: prometheus-basic-auth
+      nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+      #ingress.kubernetes.io/ssl-redirect: "true"
+      kubernetes.io/ingress.class: "nginx"
+    hosts:
+      - {{ .Values.prometheus_ingress_host }}
+    paths:
+      - /
+    #tls:
+    #  - secretName: prometheus-tls
+    #    hosts:
+    #      - {{ .Values.prometheus_ingress_host }}
+
+
+grafana:
+  image:
+    repository: grafana/grafana
+    tag: 8.1.4
+  #adminPassword: examplePassword
+  grafana.ini:
+    auth:
+      disable_login_form: false
+    auth.anonymous:
+      enabled: true
+      org_role: Viewer
+    auth.basic:
+      enabled: false
+    dashboards:
+      default_home_dashboard_path: /tmp/dashboards/rancher-default-home.json
+    users:
+      auto_assign_org_role: Viewer
+    date_formats:
+      default_timezone: browser
+    server:
+      root_url: "https://{{ .Values.grafana_ingress_host }}"
+    #database:
+    #  type: mysql
+    #  host: db-host-name:3306
+    #  name: grafana
+    #  user: grafana
+    #  password: grafana-password
+  #persistence:
+  #  enabled: true
+  #  size: 5Gi
+  ingress:
+    enabled: true
+    annotations:
+      #ingress.kubernetes.io/ssl-redirect: "true"
+      #kubernetes.io/ingress.class: "nginx"
+    path: /
+    hosts:
+      - {{ .Values.grafana_ingress_host }}
+    #tls:
+    #- hosts:
+    #  - {{ .Values.grafana_ingress_host }}
+    #  secretName: grafana-tls-secret
+  additionalDataSources:
+   #- name: Elasticsearch
+   #  access: proxy
+   #  type: elasticsearch
+   #  editable: true
+   #  url: https://elasticsearch.local.lan
+   #  database: filebeat-*
+   #  jsonData:
+   #    tlsSkipVerify: true
+   #    esVersion: 70
+   #    timeField: '@timestamp'
+   #    maxConcurrentShardRequests: 5
+   #    readOnly: true
+   #    logLevelField: ''
+   #    logMessageField: ''
+    - name: Prometheus-LTS-internal
+      access: proxy
+      type: prometheus
+      url: http://vm-victoria-metrics-single-server-internal:8428
+      editable: true
+   #- name: Prometheus-LTS-remote
+   #  access: proxy
+   #  type: prometheus
+   #  url: http://vm-victoria-metrics-single-server-remote:8428
+   #  editable: true
+ #notifiers:
+ #  notifiers.yaml:
+ #    notifiers:
+ #      - name: Alertmanager
+ #        type: prometheus-alertmanager
+ #        uid: WerBu5Hu1
+ #        settings:
+ #          url: http://rancher-monitoring-alertmanager:9093
+
+
+alertmanager:
+  ingress:
+    enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/auth-type: basic
+      nginx.ingress.kubernetes.io/auth-secret: prometheus-basic-auth
+      nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+      #ingress.kubernetes.io/ssl-redirect: "true"
+      kubernetes.io/ingress.class: "nginx"
+    hosts:
+      - {{ .Values.alertmanager_ingress_host }}
+    paths:
+      - /
+    #tls:
+    #  - secretName: alertmanager-tls
+    #    hosts:
+    #      - {{ .Values.alertmanager_ingress_host }}
+  alertmanagerSpec:
+    externalUrl: "https://{{ .Values.alertmanager_ingress_host }}"
+    configSecret: alertmanager-rancher-monitoring-alertmanager-custom
+    #storage:
+    #  volumeClaimTemplate:
+    #    spec:
+    #      accessModes: ["ReadWriteOnce"]
+    #      resources:
+    #        requests:
+    #          storage: 1Gi

@@ -1,0 +1,13 @@
+server:
+  fullnameOverride: "vm-victoria-metrics-single-server-internal"
+  # Data retention period (months)
+  retentionPeriod: 1
+  persistentVolume:
+    enabled: false
+    #enabled: true
+    #accessModes:
+    #  - ReadWriteOnce
+    #storageClass: ""
+    #size: 16Gi
+  serviceMonitor:
+    enabled: true
