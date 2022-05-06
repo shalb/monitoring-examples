@@ -1,0 +1,167 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app: postgresql
+  name: postgresql-brm-rules
+spec:
+  groups:
+    - name: "postgresql brm alerts"
+      rules:
+        - alert: PostgresqlBrmExporterScrapeFailed
+          expr: up{job="postgresql-brm-metrics"} != 1
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Pod: {{ $labels.pod }}'
+            description: 'Fix Postgresql metrics scape for pod: {{ $labels.pod }}'
+
+        - alert: PostgresqlBrmNoMetrics
+          expr: absent(pg_up{job="postgresql-brm-metrics"}) == 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No metrics from Postgresql instances'
+            description: 'Fix Postgresql metrics scape. Job: {{ $labels.job }}'
+
+        - alert: PostgresqlBrmMetricsScrapeFailed
+          expr: pg_up{job="postgresql-brm-metrics"} != 1
+          labels:
+            severity: critical
+          annotations:
+            summary: 'No metrics from Postgresql'
+            description: 'Postgresql-exporter unable to scrape metrics from Postgresql endpoint. Check logs of exporter and Postgresql'
+
+        - alert: PostgresqlBrmMetricsScrapeError
+          expr: pg_exporter_last_scrape_error{job="postgresql-brm-metrics"} != 0
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Partially missing metrics from Postgresql'
+            description: 'Postgresql-exporter unable to scrape some metrics from Postgresql endpoint. Check logs of exporter and Postgresql'
+
+        - alert: PostgresqlBrmTooManyConnections
+          expr: sum(pg_stat_activity_count{job="postgresql-brm-metrics"}) by (server) > sum(pg_settings_max_connections{job="postgresql-brm-metrics"} * 0.8) by (server)
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Too many connections to Postgresql'
+            description: 'Too many connections to Postgresql server: {{ $labels.server }}'
+
+        - alert: PostgresqlBrmNoReplicationMetric
+          expr: absent(pg_stat_replication_pg_wal_lsn_diff{job="postgresql-brm-metrics",server="postgres-master.pkbu.xyz:5432",state="streaming",slot_name="87999"}) == 1
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Replication metric is absent'
+            description: 'Replication metric is absent on server: {{ $labels.server }}'
+
+        - alert: PostgresqlBrmReplicationLagTooHigh
+          expr: pg_stat_replication_pg_wal_lsn_diff{job="postgresql-brm-metrics"} > 0
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Replication lag too high'
+            description: 'Replication lag too high on Postgresql node: {{ $labels.instance }}'
+
+
+    - name: "node-exporter postgresql alerts"
+      rules:
+        - alert: NodeExporterPostgresqlBrmScrapeFailed
+          expr: up{job="node-exporter-postgresql-brm-metrics"} != 1
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Scape failed for instance: {{ $labels.instance }}'
+            description: 'Fix Node-exporter metrics scape for instance: {{ $labels.instance }}'
+
+        - alert: NodeExporterPostgresqlBrmNoMetrics
+          expr: absent(node_load1{job="node-exporter-postgresql-brm-metrics"}) == 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'No metrics from Node-exporter instances'
+            description: 'Fix Node-exporter metrics scape. Job: {{ $labels.job }}'
+
+        - alert: NodeExporterPostgresqlBrmTooManyCollectorErrors
+          expr: node_scrape_collector_success{job="node-exporter-postgresql-brm-metrics"} != 1
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Node-exporter has too many errors for collector'
+            description: 'Node-exporter has too many errors for collector: {{ $labels.collector }}. Go to instance: {{ $labels.instance }} and check node-exporter logs to find source of problem'
+
+        - alert: NodeExporterPostgresqlBrmTooManyTextfileScrapeErrors
+          expr: node_textfile_scrape_error{job="node-exporter-postgresql-brm-metrics"} != 0
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Node-exporter has too many text file scrape errors'
+            description: 'Node-exporter has too many text file scrape errors. Go to instance: {{ $labels.instance }} and check node-exporter logs to find source of problem'
+
+        - alert: NodeExporterPostgresqlBrmMountPointAvailableSpaceWarning
+          expr: ((node_filesystem_avail_bytes{job="node-exporter-postgresql-brm-metrics"} / node_filesystem_size_bytes{job="node-exporter-postgresql-brm-metrics"}) * 100) < 20
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Mount point has < 20% of free space'
+            description: 'Mount point has < 20% of free space. Go to instance: {{ $labels.instance }}, extend file system or clean some data, mount point: {{ $labels.mountpoint }}'
+
+        - alert: NodeExporterPostgresqlBrmMountPointAvailableSpaceCritical
+          expr: ((node_filesystem_avail_bytes{job="node-exporter-postgresql-brm-metrics"} / node_filesystem_size_bytes{job="node-exporter-postgresql-brm-metrics"}) * 100) < 5
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Mount point has < 5% of free space'
+            description: 'Mount point has < 5% of free space. Go to instance: {{ $labels.instance }}, extend file system or clean some data, mount point: {{ $labels.mountpoint }}'
+
+        - alert: NodeExporterPostgresqlBrmMountPointAvailableInodesWarning
+          expr: ((node_filesystem_files_free{job="node-exporter-postgresql-brm-metrics"} / node_filesystem_files{job="node-exporter-postgresql-brm-metrics"}) * 100) < 20
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Mount point has < 20% of free inodes'
+            description: 'Mount point has < 20% of free inodes. Go to instance: {{ $labels.instance }}, replace file system or clean some data, mount point: {{ $labels.mountpoint }}'
+
+        - alert: NodeExporterPostgresqlBrmMountPointAvailableInodesCritical
+          expr: ((node_filesystem_files_free{job="node-exporter-postgresql-brm-metrics"} / node_filesystem_files{job="node-exporter-postgresql-brm-metrics"}) * 100) < 5
+          labels:
+            severity: critical
+          annotations:
+            summary: 'Mount point has < 5% of free inodes'
+            description: 'Mount point has < 5% of free inodes. Go to instance: {{ $labels.instance }}, replace file system or clean some data, mount point: {{ $labels.mountpoint }}'
+
+        - alert: NodeExporterPostgresqlBrmMountPointReadonly
+          expr: node_filesystem_readonly{job="node-exporter-postgresql-brm-metrics"} != 0
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Mount point in read only mode'
+            description: 'Mount point in read only mode. Go to instance: {{ $labels.instance }}, find source of problem, mount point: {{ $labels.mountpoint }}'
+
+        - alert: NodeExporterPostgresqlBrmTooManyDeviceErrors
+          expr: node_filesystem_device_error{job="node-exporter-postgresql-brm-metrics"} != 0
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Too many errors while getting statistics from disk'
+            description: 'Too many errors while getting statistics from disk device: {{ $labels.device }}. Go to instance: {{ $labels.instance }} and check node-exporter logs to find source of problem'
+
+        - alert: NodeExporterPostgresqlBrmCpuUsageTooHigh
+          expr: (1 - (sum(irate(node_cpu_seconds_total{job="node-exporter-postgresql-brm-metrics",mode="idle"}[5m])) without (cpu,mode) / count(node_cpu_seconds_total{job="node-exporter-postgresql-brm-metrics",mode="idle"}) without (cpu,mode))) * 100 > 80
+          for: 30m
+          labels:
+            severity: warning
+          annotations:
+            summary: 'CPU usage too high'
+            description: 'CPU usage to high on instance: {{ $labels.instance }}'
+
+        - alert: NodeExporterPostgresqlBrmMemoryUsageTooHigh
+          expr: ((node_memory_MemTotal_bytes{job="node-exporter-postgresql-brm-metrics"} - node_memory_MemAvailable_bytes{job="node-exporter-postgresql-brm-metrics"}) / node_memory_MemTotal_bytes{job="node-exporter-postgresql-brm-metrics"}) * 100 > 80
+          labels:
+            severity: warning
+          annotations:
+            summary: 'Memory usage too high'
+            description: 'Memory usage to high on instance: {{ $labels.instance }}'

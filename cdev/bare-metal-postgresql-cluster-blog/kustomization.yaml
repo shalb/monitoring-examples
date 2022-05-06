@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - rules.yaml
+
+configMapGenerator:
+- name: grafana-dashboards-postgresql-exporter-brm
+  files:
+    - postgresql-exporter-brm.json
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    grafana_dashboard: "1"
