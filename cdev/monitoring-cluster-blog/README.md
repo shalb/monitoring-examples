@@ -16,6 +16,7 @@
    * [Deploy our project](#deploy-our-project)
 * [Destroy our project](#destroy-our-project)
 * [Conclusion](#conclusion)
+
 # Goal
 In this article we will learn how to deploy project which contains test monitoring environment.  
 This project will be deployed by [Clusterdev](https://cluster.dev/) to [AWS](https://aws.amazon.com/),  
@@ -101,7 +102,7 @@ echo "$(tr -dc a-zA-Z0-9,._! </dev/urandom | head -c 20)"
 
 ## Run bash in Clusterdev container
 To avoid installation of all needed tools directly to client host - we will run all commands inside Clusterdev container.  
-We should run next commands to execute `bash` inside cdev conainer and proceed to deploy:  
+We should run next commands to execute `bash` inside cdev container and proceed to deploy:  
 ```bash
 alias cdev_bash='docker run -it -v $(pwd):/workspace/cluster-dev --env-file=env --network=host --entrypoint="" clusterdev/cluster.dev:v0.6.3 bash'
 cdev_bash
@@ -112,7 +113,7 @@ Now we should deploy our project to AWS via `cdev` command:
 ```bash
 cdev apply -l debug | tee apply.log
 ```
-Successfull deploy should provide further instructions how to access Kubernetes and URLs of ArgoCD, Grafana web UIs.  
+Successful deploy should provide further instructions how to access Kubernetes and URLs of ArgoCD, Grafana web UIs.  
 In some cases we should wait some time to access those web UIs.  
 DNS update delays may be source of problem.  
 In such case we able to forward all needed services via `kubectl` to client host:  
@@ -125,15 +126,16 @@ We may test our forwards via `curl`:
 curl 127.0.0.1:18080
 curl 127.0.0.1:28080
 ```
-If we see no errors from `curl`, than client host should access those same endpoins via any browser.
+If we see no errors from `curl`, than client host should access those same endpoints via any browser.
 
 # Destroy our project
 If we want to destroy our cluster - we should run command:
 ```bash
+cdev apply -l debug
 cdev destroy -l debug | tee destroy.log
 ```
 
 # Conclusion
 Now we able to deploy and destroy basic project with monitoring stack by simple commands to save our time.  
 This project allows us to use current project as test environment for monitoring related articles  
-and test many usefull monitoring cases before applying it to production environments.
+and test many useful monitoring cases before applying it to production environments.
