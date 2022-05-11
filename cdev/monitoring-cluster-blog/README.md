@@ -88,7 +88,12 @@ To secure ArgoCD we should replace value of `argocd_server_admin_password` key
 by unique password in config file `project.yaml`. Default value is bcrypted `password` string.  
 To encrypt our custom password we may use [online tool](https://www.browserling.com/tools/bcrypt) or encrypt it by command:
 ```bash
-docker run -it --entrypoint="" clusterdev/cluster.dev:v0.6.3 apt install -y apache2-utils && htpasswd -bnBC 10 "" myPassword | tr -d ':\n' ; echo ''
+alias cdev_bash='docker run -it -v $(pwd):/workspace/cluster-dev --env-file=env --network=host --entrypoint="" clusterdev/cluster.dev:v0.6.3 bash'
+cdev_bash
+password=$(tr -dc a-zA-Z0-9,._! </dev/urandom | head -c 20)
+apt install -y apache2-utils && htpasswd -bnBC 10 "" ${password} | tr -d ':\n' ; echo ''
+echo "Password: $password"
+exit
 ```
 
 ### Set Grafana password
@@ -104,7 +109,6 @@ echo "$(tr -dc a-zA-Z0-9,._! </dev/urandom | head -c 20)"
 To avoid installation of all needed tools directly to client host - we will run all commands inside Clusterdev container.  
 We should run next commands to execute `bash` inside cdev container and proceed to deploy:  
 ```bash
-alias cdev_bash='docker run -it -v $(pwd):/workspace/cluster-dev --env-file=env --network=host --entrypoint="" clusterdev/cluster.dev:v0.6.3 bash'
 cdev_bash
 ```
 
