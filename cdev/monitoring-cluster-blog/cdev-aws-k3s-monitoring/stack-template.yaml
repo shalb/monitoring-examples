@@ -1,0 +1,10 @@
+name: monitoring-template
+kind: StackTemplate
+units:
+  - 
+    name: argocd_apps
+    type: k8s-manifest
+    path: ./argocd-apps/
+    apply_template: true
+    kubeconfig: {{ .variables.kubeconfig }}
+    depends_on: {{ .variables.depends_on }}
