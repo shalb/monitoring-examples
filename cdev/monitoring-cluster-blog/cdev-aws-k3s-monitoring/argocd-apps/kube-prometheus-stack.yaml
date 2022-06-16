@@ -15,9 +15,6 @@ spec:
     helm:
       skipCrds: true
       values: |
-        # CRDs created by this chart are not removed by default and should be manually cleaned up:
-        # https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack#uninstall-helm-chart
-
         #kubeControllerManager:
         #  enabled: false
 
@@ -49,19 +46,7 @@ spec:
 
 
         grafana:
-          adminPassword: admin
-          #adminPassword: {{ .variables.grafana_password }}
-          #adminPassword: {{ .project.variables.grafana_password }}
-
-          # Enable google auth if needed
-          #env:
-          #  GF_SERVER_ROOT_URL: "https://grafana.example.local.lan"
-          #  GF_AUTH_GOOGLE_ENABLED: "true"
-          #  GF_AUTH_GOOGLE_CLIENT_ID: "exampleID"
-          #  GF_AUTH_GOOGLE_CLIENT_SECRET: "exampleSecret"
-          #  GF_AUTH_GOOGLE_ALLOWED_DOMAINS: "example-1.local.lan example-2.local.lan"
-          #  GF_AUTH_GOOGLE_ALLOW_SIGN_UP: "true"
-
+          adminPassword: {{ .project.variables.grafana_password }}
           # Enable ingress if needed
           ingress:
             enabled: false
@@ -70,13 +55,6 @@ spec:
               kubernetes.io/ingress: map[class:nginx] 
               kubernetes.io/tls-acme: "true"                                       
               nginx.ingress.kubernetes.io/backend-protocol: HTTP
-              #nginx.ingress.kubernetes.io/backend-protocol: HTTPS
-              #nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-          #  annotations:
-          #    cert-manager.io/cluster-issuer: letsencrypt-prod
-          #    ingress.kubernetes.io/ssl-redirect: "true"
-          #    kubernetes.io/ingress.class: "nginx"
-          #    kubernetes.io/tls-acme: "true"
             path: /
             hosts:
               - grafana.{{ .variables.cluster_name }}.{{ .variables.domain }}
