@@ -1,4 +1,4 @@
-name: k3s-monitoring-app
+name: my-k3s-cluster-monitoring
 template: https://github.com/shalb/monitoring-examples//cdev/monitoring-cluster-blog/cdev-aws-k3s-monitoring
 kind: Stack
 backend: aws-backend
