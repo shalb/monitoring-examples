@@ -29,4 +29,3 @@ variables:
       max_size: 1
       instance_type: {{ .project.variables.worker_node_instance_type }}
   argocdServerAdminPassword: {{ .project.variables.argocd_server_admin_password }}
-  grafana_password: {{ .project.variables.grafana_password }}

@@ -9,4 +9,5 @@ variables:
   env: {{ .project.variables.env }}
   organization: {{ .project.variables.organization }}
   region: {{ .project.variables.region }}
+  grafana_password: {{ .project.variables.grafana_password }}
   depends_on: my-k3s-cluster.argocd
