@@ -1,0 +1,12 @@
+name: k3s-monitoring-app
+template: https://github.com/shalb/monitoring-examples//cdev/monitoring-cluster-blog/cdev-aws-k3s-monitoring
+kind: Stack
+backend: aws-backend
+variables:
+  kubeconfig: {{ output "my-k3s-cluster.kubeconfig.kubeconfig_path" }}
+  cluster_name: {{ output "my-k3s-cluster.print_outputs.cluster_name" }}
+  domain: {{ .project.variables.domain }}
+  env: {{ .project.variables.env }}
+  organization: {{ .project.variables.organization }}
+  region: {{ .project.variables.region }}
+  depends_on: my-k3s-cluster.argocd
