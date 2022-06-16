@@ -46,7 +46,7 @@ spec:
 
 
         grafana:
-          adminPassword: {{ .project.variables.grafana_password }}
+          adminPassword: {{ .variables.grafana_password }}
           # Enable ingress if needed
           ingress:
             enabled: false
