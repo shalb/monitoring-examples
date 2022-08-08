@@ -138,7 +138,7 @@ spec:
 
             inhibit_rules:
               - target_matchers:
-                  - alertname =~ "TargetDown|ExampleTwoAlertToInhibit|ExampleOneAlertToInhibit"
+                  - alertname =~ "ExampleTwoAlertToInhibit|ExampleOneAlertToInhibit"
                 source_matchers:
                   - alertname = Watchdog
               - source_matchers:
