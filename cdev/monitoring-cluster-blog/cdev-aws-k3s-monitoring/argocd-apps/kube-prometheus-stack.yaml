@@ -8,6 +8,12 @@ spec:
     namespace: monitoring
     server: https://kubernetes.default.svc
   project: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
     chart: kube-prometheus-stack
@@ -15,12 +21,12 @@ spec:
     helm:
       skipCrds: true
       values: |
-        #kubeControllerManager:
-        #  enabled: false
+        kubeControllerManager:
+          enabled: false
 
 
-        #kubeScheduler:
-        #  enabled: false
+        kubeScheduler:
+          enabled: false
 
 
         prometheusOperator:
@@ -62,47 +68,21 @@ spec:
             - hosts:
               - grafana.{{ .variables.cluster_name }}.{{ .variables.domain }}
               secretName: grafana-tls-secret
-
-          #grafana.ini:
-          #  server:
-          #    root_url: https://grafana.{{ .variables.cluster_name }}.{{ .variables.domain }}
-
-          # Enable persistant storage if needed
-          #persistence:
-          #  enabled: true
-          #  size: 5Gi
-          #additionalDataSources:
-          #  - name: prometheus-dev
-          #    type: prometheus
-          #    url: https://prometheus-dev.example.local.lan
-          #    basicAuth: true
-          #    basicAuthUser: admin
-          #    basicAuthPassword: examplePasswordDev
-          #    editable: true
-          #    version: 3
+          grafana.ini:
+            server:
+              root_url: https://grafana.{{ .variables.cluster_name }}.{{ .variables.domain }}
+          additionalDataSources:
+           - name: Alertmanager
+             type: alertmanager
+             url: http://kube-prometheus-stack-alertmanager:9093
+             editable: true
+             access: proxy
+             version: 2
+             jsonData:
+               implementation: prometheus
 
 
         prometheus:
-          # Enable ingress if needed
-          #ingress:
-          #  enabled: true
-          #  annotations:
-          #    cert-manager.io/cluster-issuer: letsencrypt-prod
-          #    nginx.ingress.kubernetes.io/auth-type: basic
-          #    nginx.ingress.kubernetes.io/auth-secret: prometheus-basic-auth
-          #    nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
-          #    ingress.kubernetes.io/ssl-redirect: "true"
-          #    kubernetes.io/ingress.class: "nginx"
-          #    kubernetes.io/tls-acme: "true"
-          #  hosts:
-          #    - prometheus.{{ .variables.cluster_name }}.{{ .variables.domain }}
-          #  paths:
-          #    - /
-          #  tls:
-          #    - secretName: prometheus-tls
-          #      hosts:
-          #        - prometheus.{{ .variables.cluster_name }}.{{ .variables.domain }}
-
           prometheusSpec:
             serviceMonitorSelectorNilUsesHelmValues: false
             podMonitorSelectorNilUsesHelmValues: false
@@ -116,8 +96,8 @@ spec:
               region: {{ .variables.region }}
               domain: {{ .variables.domain }}
 
-            #externalUrl: https://prometheus.{{ .variables.cluster_name }}.{{ .variables.domain }}
-            #retention: 30d
+            #retention: 1d
+            retentionSize: 1GB
 
             # Enable persistant storage if needed
             #storageSpec:
@@ -130,28 +110,7 @@ spec:
 
 
         alertmanager:
-          # Enable ingress if needed
-          #ingress:
-          #  enabled: true
-          #  annotations:
-          #    cert-manager.io/cluster-issuer: letsencrypt-prod
-          #    nginx.ingress.kubernetes.io/auth-type: basic
-          #    nginx.ingress.kubernetes.io/auth-secret: prometheus-basic-auth
-          #    nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
-          #    ingress.kubernetes.io/ssl-redirect: "true"
-          #    kubernetes.io/ingress.class: "nginx"
-          #    kubernetes.io/tls-acme: "true"
-          #  hosts:
-          #    - alertmanager.{{ .variables.cluster_name }}.{{ .variables.domain }}
-          #  paths:
-          #    - /
-          #  tls:
-          #    - secretName: alertmanager-tls
-          #      hosts:
-          #        - alertmanager.{{ .variables.cluster_name }}.{{ .variables.domain }}
-
           #alertmanagerSpec:
-            #externalUrl: https://alertmanager.{{ .variables.cluster_name }}.{{ .variables.domain }}
             # Enable persistant storage if needed
             #storage:
             #  volumeClaimTemplate:
@@ -160,7 +119,6 @@ spec:
             #      resources:
             #        requests:
             #          storage: 1Gi
-
           config:
             global:
               resolve_timeout: 5m
@@ -171,85 +129,13 @@ spec:
               repeat_interval: 120h
               receiver: blackhole
               routes:
-              # Alerting disabled - enable only for prod
-              - receiver: blackhole
-                group_by: [...]
-                repeat_interval: 120h
-
-              #- receiver: customer_slack
-              #  group_by: [...]
-              #  continue: true
-              #  repeat_interval: 120h
-
-              # Non needed alerts disabled
-              #- receiver: blackhole
-              #  group_by: [...]
-              #  match_re:
-              #    alertname: "CPUThrottlingHigh"
-              #  repeat_interval: 120h
-
-              - receiver: opsgenie_info
+              - receiver: default
                 group_by: [...]
                 match_re:
-                  severity: "info"
-                continue: true
-                repeat_interval: 120h
-
-              - receiver: opsgenie_warning
-                group_by: [...]
-                match_re:
-                  severity: "warning"
-                continue: true
-                repeat_interval: 120h
-
-              - receiver: opsgenie_critical
-                group_by: [...]
-                match_re:
-                  severity: "critical"
-                continue: true
+                  severity: "info|warning|critical"
+                continue: false
                 repeat_interval: 120h
 
             receivers:
             - name: blackhole
-
-            - name: opsgenie_critical
-              opsgenie_configs:
-                - api_key: exampleAPIKey
-                  responders:
-                    - name: exampleTeam
-                      type: team
-                  message: "{{ .GroupLabels.cluster_name }} | {{ .GroupLabels.alertname }} {{ .CommonAnnotations.message }}"
-                  priority: "P1"
-
-            - name: opsgenie_warning
-              opsgenie_configs:
-                - api_key: exampleAPIKey
-                  responders:
-                    - name: exampleTeam
-                      type: team
-                  message: "{{ .GroupLabels.cluster_name }} | {{ .GroupLabels.alertname }} {{ .CommonAnnotations.message }}"
-                  priority: "P3"
-
-            - name: opsgenie_info
-              opsgenie_configs:
-                - api_key: exampleAPIKey
-                  responders:
-                    - name: exampleTeam
-                      type: team
-                  message: "{{ .GroupLabels.cluster_name }} | {{ .GroupLabels.alertname }} {{ .CommonAnnotations.message }}"
-                  priority: "P5"
-
-            #- name: customer_slack
-            #  slack_configs:
-            #    - api_url: https://hooks.slack.com/services/000000000/00000000000/000000000000000000000000
-            #      username: prometheus
-            #      title: "cluster_name: '{{ .GroupLabels.cluster_name }}' | alert: '{{ .GroupLabels.alertname }} {{ .CommonAnnotations.message }}'"
-            #      text: "{{ .CommonAnnotations.description }}"
-            #      title_link: "https://grafana.{{ .variables.cluster_name }}.{{ .variables.domain }}/{{ .CommonAnnotations.grafana_title_link }}"
-            #      send_resolved: true
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-    - CreateNamespace=true
+            - name: default
