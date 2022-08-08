@@ -129,13 +129,23 @@ spec:
               repeat_interval: 120h
               receiver: blackhole
               routes:
-              - receiver: default
-                group_by: [...]
-                match_re:
-                  severity: "info|warning|critical"
-                continue: false
-                repeat_interval: 120h
+                - receiver: default
+                  group_by: [...]
+                  match_re:
+                    severity: "info|warning|critical"
+                  continue: false
+                  repeat_interval: 120h
+
+            inhibit_rules:
+              - target_matchers:
+                  - alertname =~ "ExampleAlertToInhibit|Watchdog|AlertInhibitorBase"
+                source_matchers:
+                  - alertname = AlertInhibitor
+              - target_matchers:
+                  - alertname = AlertInhibitor
+                source_matchers:
+                  - alertname = AlertInhibitorBase
 
             receivers:
-            - name: blackhole
-            - name: default
+              - name: blackhole
+              - name: default
