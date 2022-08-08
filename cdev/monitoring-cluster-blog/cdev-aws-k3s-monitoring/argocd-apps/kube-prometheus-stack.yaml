@@ -74,7 +74,7 @@ spec:
           additionalDataSources:
            - name: Alertmanager
              type: alertmanager
-             url: http://kube-prometheus-stack-alertmanager:9093
+             url: http://monitoring-kube-prometheus-alertmanager:9093
              editable: true
              access: proxy
              version: 2
