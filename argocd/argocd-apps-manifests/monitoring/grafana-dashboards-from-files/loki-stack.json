@@ -23,14 +23,16 @@
   "fiscalYearStartMonth": 0,
   "gnetId": 14055,
   "graphTooltip": 0,
-  "id": 40,
-  "iteration": 1640770074600,
+  "id": 33,
+  "iteration": 1662576050329,
   "links": [],
   "liveNow": false,
   "panels": [
     {
       "collapsed": false,
-      "datasource": "${prom_datasource}",
+      "datasource": {
+        "uid": "${prom_datasource}"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -47,7 +49,10 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${prom_datasource}",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prom_datasource}"
+      },
       "description": "Total number of messages logged by Loki itself",
       "fieldConfig": {
         "defaults": {
@@ -82,7 +87,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.2.3",
+      "pluginVersion": "8.4.6",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -113,8 +118,12 @@
       "steppedLine": false,
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
           "exemplar": true,
-          "expr": "sum(rate(log_messages_total{level=~\"error|warn\"}[1m])) by (level)\n",
+          "expr": "sum(rate(loki_log_messages_total{level=~\"error|warn\"}[1m])) by (level)\n",
           "format": "time_series",
           "hide": false,
           "interval": "",
@@ -123,7 +132,12 @@
           "refId": "A"
         },
         {
-          "expr": "log_messages_total",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "exemplar": true,
+          "expr": "loki_log_messages_total",
           "format": "time_series",
           "hide": true,
           "interval": "",
@@ -133,9 +147,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Number of error/warning messages logged by Loki itself",
       "tooltip": {
         "shared": true,
@@ -144,37 +156,32 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "none",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
-      "datasource": "${loki_datasource}",
+      "datasource": {
+        "type": "loki",
+        "uid": "${loki_datasource}"
+      },
       "gridPos": {
         "h": 5,
         "w": 15,
@@ -195,13 +202,16 @@
       "pluginVersion": "7.3.5",
       "targets": [
         {
-          "expr": "{app=\"loki\"} | logfmt | level=\"warn\" or level=\"error\"",
+          "datasource": {
+            "type": "loki",
+            "uid": "knbt50WVz"
+          },
+          "expr": "{app=~\"loki.*\"} | logfmt | level=\"warn\" or level=\"error\"",
+          "hide": false,
           "legendFormat": "",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Error/warning messages logged by Loki itself",
       "type": "logs"
     },
@@ -210,13 +220,23 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${prom_datasource}",
+      "datasource": {
+        "type": "loki",
+        "uid": "${loki_datasource}"
+      },
       "description": "Total number of messages logged by Promtail",
       "fieldConfig": {
         "defaults": {
           "links": []
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID"
+            },
+            "properties": []
+          }
+        ]
       },
       "fill": 1,
       "fillGradient": 0,
@@ -245,7 +265,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.2.3",
+      "pluginVersion": "8.4.6",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -276,20 +296,37 @@
       "steppedLine": false,
       "targets": [
         {
-          "exemplar": true,
-          "expr": "sum(rate(log_messages_total{service=\"loki-stack-promtail-headless\",level=~\"error|warn\"}[1m])) by (level)\n",
-          "format": "time_series",
-          "hide": false,
-          "interval": "",
-          "intervalFactor": 1,
-          "legendFormat": "{{level}}",
+          "datasource": {
+            "type": "loki",
+            "uid": "${loki_datasource}"
+          },
+          "expr": "sum(count_over_time({app=\"promtail\"} | logfmt | level=\"warn\" [1m]))",
+          "legendFormat": "Warn",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${loki_datasource}"
+          },
+          "expr": "sum(count_over_time({app=\"promtail\"} | logfmt | level=\"error\" [1m]))",
+          "hide": false,
+          "legendFormat": "Error",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "${loki_datasource}"
+          },
+          "expr": "sum(count_over_time({app=\"promtail\"} | logfmt | level=\"info\" [1m]))",
+          "hide": true,
+          "legendFormat": "Info",
+          "refId": "C"
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Error/warning messages logged by Promtail",
       "tooltip": {
         "shared": true,
@@ -298,37 +335,32 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "none",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
-      "datasource": "${loki_datasource}",
+      "datasource": {
+        "type": "loki",
+        "uid": "${loki_datasource}"
+      },
       "gridPos": {
         "h": 5,
         "w": 15,
@@ -349,13 +381,15 @@
       "pluginVersion": "7.3.5",
       "targets": [
         {
+          "datasource": {
+            "type": "loki",
+            "uid": "knbt50WVz"
+          },
           "expr": "{app=\"promtail\"} | logfmt | level=\"warn\" or level=\"error\"",
           "legendFormat": "",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Error/warning messages logged by Promtail",
       "type": "logs"
     },
@@ -364,7 +398,9 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${prom_datasource}",
+      "datasource": {
+        "uid": "${prom_datasource}"
+      },
       "description": "Number of log entries dropped because failed to be sent to the Loki ingester after all retries.",
       "fill": 1,
       "fillGradient": 0,
@@ -393,7 +429,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.2.3",
+      "pluginVersion": "8.4.6",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -412,9 +448,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Promtail - dropped log entries",
       "tooltip": {
         "shared": true,
@@ -423,38 +457,32 @@
       },
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
       "collapsed": true,
-      "datasource": "${prom_datasource}",
+      "datasource": {
+        "uid": "${prom_datasource}"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -468,7 +496,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${prom_datasource}",
+          "datasource": {
+            "uid": "${prom_datasource}"
+          },
           "description": "The total number of streams created per tenant.\nThis should not increase after startup.",
           "fieldConfig": {
             "defaults": {
@@ -502,7 +532,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "8.2.3",
+          "pluginVersion": "8.4.6",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -520,9 +550,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Number of Streams in Loki",
           "tooltip": {
             "shared": true,
@@ -531,33 +559,25 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -565,7 +585,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${prom_datasource}",
+          "datasource": {
+            "uid": "${prom_datasource}"
+          },
           "description": "The total number of log entries received per tenant (not necessarily of lines, as an entry can have more than one line of text).",
           "fieldConfig": {
             "defaults": {
@@ -599,7 +621,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "8.2.3",
+          "pluginVersion": "8.4.6",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -617,9 +639,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Loki (distributor) - log entries received per second",
           "tooltip": {
             "shared": true,
@@ -628,33 +648,25 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -662,7 +674,9 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${prom_datasource}",
+          "datasource": {
+            "uid": "${prom_datasource}"
+          },
           "description": "The total number of uncompressed bytes received per tenant.\n",
           "fieldConfig": {
             "defaults": {
@@ -696,7 +710,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "8.2.3",
+          "pluginVersion": "8.4.6",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -713,9 +727,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Bytes received in ingester per second",
           "tooltip": {
             "shared": true,
@@ -724,33 +736,25 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -759,7 +763,9 @@
     },
     {
       "collapsed": true,
-      "datasource": "${prom_datasource}",
+      "datasource": {
+        "uid": "${prom_datasource}"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -773,7 +779,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${prom_datasource}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom_datasource}"
+          },
           "decimals": 2,
           "description": "Percentage of actual usage over configured limit",
           "editable": true,
@@ -791,7 +800,7 @@
             "h": 6,
             "w": 24,
             "x": 0,
-            "y": 36
+            "y": 18
           },
           "hiddenSeries": false,
           "id": 247,
@@ -818,7 +827,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "8.2.3",
+          "pluginVersion": "8.4.6",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -828,8 +837,12 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "100 * max by(pod,container) (container_memory_working_set_bytes{container!=\"\",container!=\"POD\",pod=~\"loki-stack-[0-9].*\"})\n/\non (pod,container) group_left kube_pod_container_resource_limits{resource=\"memory\",pod=~\"loki-stack-[0-9].*\"}",
+              "expr": "100 * max by(pod,container) (container_memory_working_set_bytes{container!=\"\",container!=\"POD\",pod=~\"loki.*\"})\n/\non (pod,container) group_left kube_pod_container_resource_limits{resource=\"memory\",pod=~\"loki.*\"}",
               "hide": false,
               "interval": "",
               "legendFormat": "{{pod}} / {{container}}",
@@ -837,9 +850,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Loki memory usage (% of Kubernetes memory limit)",
           "tooltip": {
             "msResolution": false,
@@ -849,9 +860,7 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -859,7 +868,6 @@
             {
               "$$hashKey": "object:241",
               "format": "percent",
-              "label": null,
               "logBase": 1,
               "max": "100",
               "min": "0",
@@ -868,16 +876,12 @@
             {
               "$$hashKey": "object:242",
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -885,7 +889,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${prom_datasource}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom_datasource}"
+          },
           "decimals": 2,
           "editable": true,
           "error": false,
@@ -902,7 +909,7 @@
             "h": 6,
             "w": 24,
             "x": 0,
-            "y": 42
+            "y": 24
           },
           "hiddenSeries": false,
           "id": 25,
@@ -929,11 +936,10 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "8.2.3",
+          "pluginVersion": "8.4.6",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
-          "repeat": null,
           "seriesOverrides": [
             {
               "$$hashKey": "object:2165",
@@ -957,8 +963,12 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "container_memory_working_set_bytes{container!=\"\",container!=\"POD\",pod=~\"loki-stack-[0-9].*\"}",
+              "expr": "container_memory_working_set_bytes{container!=\"\",container!=\"POD\",pod=~\"loki.*\"}",
               "hide": false,
               "interval": "10s",
               "intervalFactor": 1,
@@ -968,16 +978,24 @@
               "step": 10
             },
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "min(kube_pod_container_resource_limits{resource=\"memory\",pod=~\"loki-stack-[0-9].*\"})",
+              "expr": "min(kube_pod_container_resource_limits{resource=\"memory\",pod=~\"loki.*\"})",
               "hide": false,
               "interval": "",
               "legendFormat": "Limit",
               "refId": "B"
             },
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "min(kube_pod_container_resource_requests{resource=\"memory\",pod=~\"loki-stack-[0-9].*\"})",
+              "expr": "min(kube_pod_container_resource_requests{resource=\"memory\",pod=~\"loki.*\"})",
               "interval": "",
               "legendFormat": "Request",
               "refId": "C"
@@ -993,9 +1011,7 @@
               "yaxis": "left"
             }
           ],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Loki memory usage vs Kubernetes limit and request",
           "tooltip": {
             "msResolution": false,
@@ -1005,9 +1021,7 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -1015,25 +1029,19 @@
             {
               "$$hashKey": "object:581",
               "format": "bytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "$$hashKey": "object:582",
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1041,7 +1049,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${prom_datasource}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom_datasource}"
+          },
           "decimals": 2,
           "description": "Percentage of actual usage over configured limit",
           "editable": true,
@@ -1059,7 +1070,7 @@
             "h": 6,
             "w": 24,
             "x": 0,
-            "y": 48
+            "y": 30
           },
           "hiddenSeries": false,
           "id": 772,
@@ -1086,7 +1097,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "8.2.3",
+          "pluginVersion": "8.4.6",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1096,8 +1107,12 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "100* max by(pod,container) (container_memory_working_set_bytes{container!=\"\",container!=\"POD\",pod=~\"loki-stack-promtail.*\"})\n/\non (pod,container) (kube_pod_container_resource_limits{resource=\"memory\",pod=~\"loki-stack-promtail.*\"})",
+              "expr": "100* max by(pod,container) (container_memory_working_set_bytes{container!=\"\",container!=\"POD\",pod=~\"promtail.*\"})\n/\non (pod,container) (kube_pod_container_resource_limits{resource=\"memory\",pod=~\"promtail.*\"})",
               "hide": false,
               "interval": "",
               "legendFormat": "{{pod}} / {{container}}",
@@ -1105,9 +1120,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Promtail memory usage (% of Kubernetes memory limit)",
           "tooltip": {
             "msResolution": false,
@@ -1117,9 +1130,7 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -1127,7 +1138,6 @@
             {
               "$$hashKey": "object:335",
               "format": "percent",
-              "label": null,
               "logBase": 1,
               "max": "100",
               "min": "0",
@@ -1136,16 +1146,12 @@
             {
               "$$hashKey": "object:336",
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1153,7 +1159,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${prom_datasource}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom_datasource}"
+          },
           "decimals": 2,
           "editable": true,
           "error": false,
@@ -1170,7 +1179,7 @@
             "h": 6,
             "w": 24,
             "x": 0,
-            "y": 54
+            "y": 36
           },
           "hiddenSeries": false,
           "id": 1103,
@@ -1197,7 +1206,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "8.2.3",
+          "pluginVersion": "8.4.6",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1224,8 +1233,12 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "container_memory_working_set_bytes{container!=\"\",container!=\"POD\",pod=~\"loki-stack-promtail.*\"}",
+              "expr": "container_memory_working_set_bytes{container!=\"\",container!=\"POD\",pod=~\"promtail.*\"}",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "{{pod}} / {{container}}",
@@ -1234,24 +1247,30 @@
               "step": 10
             },
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "min(kube_pod_container_resource_limits{resource=\"memory\",pod=~\"loki-stack-promtail.*\"})",
+              "expr": "min(kube_pod_container_resource_limits{resource=\"memory\",pod=~\"promtail.*\"})",
               "interval": "",
               "legendFormat": "Limit",
               "refId": "B"
             },
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "min(kube_pod_container_resource_limits{resource=\"memory\",pod=~\"loki-stack-promtail.*\"})",
+              "expr": "min(kube_pod_container_resource_limits{resource=\"memory\",pod=~\"promtail.*\"})",
               "interval": "",
               "legendFormat": "Request",
               "refId": "C"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Promtail memory usage vs Kubernetes limit and request",
           "tooltip": {
             "msResolution": false,
@@ -1261,9 +1280,7 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -1271,25 +1288,19 @@
             {
               "$$hashKey": "object:581",
               "format": "bytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "$$hashKey": "object:582",
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -1298,7 +1309,9 @@
     },
     {
       "collapsed": true,
-      "datasource": "${prom_datasource}",
+      "datasource": {
+        "uid": "${prom_datasource}"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -1312,7 +1325,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${prom_datasource}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom_datasource}"
+          },
           "decimals": 3,
           "description": "percentage of configured limit",
           "editable": true,
@@ -1330,7 +1346,7 @@
             "h": 6,
             "w": 24,
             "x": 0,
-            "y": 61
+            "y": 43
           },
           "height": "",
           "hiddenSeries": false,
@@ -1344,8 +1360,6 @@
             "min": false,
             "rightSide": false,
             "show": true,
-            "sort": null,
-            "sortDesc": null,
             "total": false,
             "values": false
           },
@@ -1357,7 +1371,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "8.2.3",
+          "pluginVersion": "8.4.6",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1367,17 +1381,19 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "100* rate(container_cpu_usage_seconds_total{container!=\"POD\",container!=\"\",pod=~\"loki-stack-[0-9].*\"}[1m])\n/\non (pod,container) kube_pod_container_resource_limits{resource=\"cpu\",container=\"loki\"}",
+              "expr": "100* rate(container_cpu_usage_seconds_total{container!=\"POD\",container!=\"\",pod=~\"loki.*\"}[1m])\n/\non (pod,container) kube_pod_container_resource_limits{resource=\"cpu\",pod=~\"loki.*\"}",
               "interval": "",
               "legendFormat": "{{pod}} / {{container}}",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Loki CPU usage (% of Kubernetes CPU limit)",
           "tooltip": {
             "msResolution": true,
@@ -1387,9 +1403,7 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -1406,16 +1420,12 @@
             {
               "$$hashKey": "object:414",
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1423,7 +1433,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${prom_datasource}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom_datasource}"
+          },
           "decimals": 3,
           "description": "",
           "editable": true,
@@ -1441,7 +1454,7 @@
             "h": 6,
             "w": 24,
             "x": 0,
-            "y": 67
+            "y": 49
           },
           "height": "",
           "hiddenSeries": false,
@@ -1455,8 +1468,6 @@
             "min": false,
             "rightSide": false,
             "show": true,
-            "sort": null,
-            "sortDesc": null,
             "total": false,
             "values": false
           },
@@ -1468,11 +1479,10 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "8.2.3",
+          "pluginVersion": "8.4.6",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
-          "repeat": null,
           "seriesOverrides": [
             {
               "$$hashKey": "object:2365",
@@ -1496,8 +1506,12 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "rate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\",pod=~\"loki-stack-[0-9].*\"}[1m])",
+              "expr": "rate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\",pod=~\"loki.*\"}[1m])",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "{{pod}} / {{container}}",
@@ -1506,15 +1520,23 @@
               "step": 10
             },
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "min(kube_pod_container_resource_limits{resource=\"cpu\",pod=~\"loki-stack-[0-9].*\"})",
+              "expr": "min(kube_pod_container_resource_limits{resource=\"cpu\",pod=~\"loki.*\"})",
               "interval": "",
               "legendFormat": "CPU Limit",
               "refId": "B"
             },
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "min(kube_pod_container_resource_limits{resource=\"cpu\",pod=~\"loki-stack-[0-9].*\"})",
+              "expr": "min(kube_pod_container_resource_limits{resource=\"cpu\",pod=~\"loki.*\"})",
               "hide": false,
               "interval": "",
               "legendFormat": "CPU Request",
@@ -1522,9 +1544,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Loki CPU usage vs Kubernetes limit and request",
           "tooltip": {
             "msResolution": true,
@@ -1534,9 +1554,7 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -1546,23 +1564,18 @@
               "format": "none",
               "label": "cores",
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "$$hashKey": "object:667",
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1570,7 +1583,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${prom_datasource}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom_datasource}"
+          },
           "decimals": 3,
           "description": "percentage of configured limit",
           "editable": true,
@@ -1588,7 +1604,7 @@
             "h": 6,
             "w": 24,
             "x": 0,
-            "y": 73
+            "y": 55
           },
           "height": "",
           "hiddenSeries": false,
@@ -1602,8 +1618,6 @@
             "min": false,
             "rightSide": false,
             "show": true,
-            "sort": null,
-            "sortDesc": null,
             "total": false,
             "values": false
           },
@@ -1615,7 +1629,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "8.2.3",
+          "pluginVersion": "8.4.6",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1625,8 +1639,12 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "100 * rate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\",pod=~\"loki-stack-promtail.*\"}[1m])\n/\non (pod,container) kube_pod_container_resource_limits{resource=\"cpu\",pod=~\"loki-stack-promtail.*\"}",
+              "expr": "100 * rate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\",pod=~\"promtail.*\"}[1m])\n/\non (pod,container) kube_pod_container_resource_limits{resource=\"cpu\",pod=~\"promtail.*\"}",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "{{pod}} / {{container}}",
@@ -1636,9 +1654,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Promtail CPU usage (% of Kubernetes limit)",
           "tooltip": {
             "msResolution": true,
@@ -1648,9 +1664,7 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -1667,16 +1681,12 @@
             {
               "$$hashKey": "object:232",
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1684,7 +1694,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": "${prom_datasource}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prom_datasource}"
+          },
           "decimals": 3,
           "description": "",
           "editable": true,
@@ -1702,7 +1715,7 @@
             "h": 6,
             "w": 24,
             "x": 0,
-            "y": 79
+            "y": 61
           },
           "height": "",
           "hiddenSeries": false,
@@ -1716,8 +1729,6 @@
             "min": false,
             "rightSide": false,
             "show": true,
-            "sort": null,
-            "sortDesc": null,
             "total": false,
             "values": false
           },
@@ -1729,7 +1740,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "8.2.3",
+          "pluginVersion": "8.4.6",
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
@@ -1756,8 +1767,12 @@
           "steppedLine": false,
           "targets": [
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "rate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\",pod=~\"loki-stack-promtail.*\"}[1m])",
+              "expr": "rate(container_cpu_usage_seconds_total{container!=\"\",container!=\"POD\",pod=~\"promtail.*\"}[1m])",
               "interval": "10s",
               "intervalFactor": 1,
               "legendFormat": "{{pod}} / {{container}}",
@@ -1766,15 +1781,23 @@
               "step": 10
             },
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "min(kube_pod_container_resource_limits{resource=\"cpu\",pod=~\"loki-stack-promtail.*\"})",
+              "expr": "min(kube_pod_container_resource_limits{resource=\"cpu\",pod=~\"promtail.*\"})",
               "interval": "",
               "legendFormat": "CPU Limit",
               "refId": "B"
             },
             {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+              },
               "exemplar": true,
-              "expr": "min(kube_pod_container_resource_limits{resource=\"cpu\",pod=~\"loki-stack-promtail.*\"})",
+              "expr": "min(kube_pod_container_resource_limits{resource=\"cpu\",pod=~\"promtail.*\"})",
               "hide": false,
               "interval": "",
               "legendFormat": "CPU Request",
@@ -1782,9 +1805,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Promtail CPU usage vs Kubernetes limit and request",
           "tooltip": {
             "msResolution": true,
@@ -1794,9 +1815,7 @@
           },
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -1806,23 +1825,18 @@
               "format": "none",
               "label": "cores",
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "$$hashKey": "object:667",
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -1831,19 +1845,17 @@
     }
   ],
   "refresh": "",
-  "schemaVersion": 31,
+  "schemaVersion": 35,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
         "current": {
-          "selected": false,
+          "selected": true,
           "text": "Prometheus",
           "value": "Prometheus"
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Datasource prom",
@@ -1851,6 +1863,7 @@
         "name": "prom_datasource",
         "options": [],
         "query": "prometheus",
+        "queryValue": "",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -1858,12 +1871,10 @@
       },
       {
         "current": {
-          "selected": false,
+          "selected": true,
           "text": "Loki",
           "value": "Loki"
         },
-        "description": null,
-        "error": null,
         "hide": 0,
         "includeAll": false,
         "label": "Datasource loki",
@@ -1871,6 +1882,7 @@
         "name": "loki_datasource",
         "options": [],
         "query": "loki",
+        "queryValue": "",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
@@ -1879,7 +1891,7 @@
     ]
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {
@@ -1909,5 +1921,6 @@
   "timezone": "browser",
   "title": "Loki stack",
   "uid": "9l2A07Ank",
-  "version": 1
+  "version": 1,
+  "weekStart": ""
 }
